@@ -28,6 +28,7 @@ import org.springframework.util.StringUtils;
  * @author Alain Sahli
  * @author Agim Emruli
  */
+@Deprecated
 public final class BufferedSqsClientBeanDefinitionUtils {
 
 	/**
@@ -47,23 +48,19 @@ public final class BufferedSqsClientBeanDefinitionUtils {
 		// Avoid instantiation
 	}
 
-	static String getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(
-			Element element, ParserContext parserContext) {
-		String amazonSqsClientBeanName = XmlWebserviceConfigurationUtils
-				.getCustomClientOrDefaultClientBeanName(element, parserContext,
-						"amazon-sqs", SQS_CLIENT_CLASS_NAME);
+	static String getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(Element element,
+			ParserContext parserContext) {
+		String amazonSqsClientBeanName = XmlWebserviceConfigurationUtils.getCustomClientOrDefaultClientBeanName(element,
+				parserContext, "amazon-sqs", SQS_CLIENT_CLASS_NAME);
 		if (!StringUtils.hasText(element.getAttribute("amazon-sqs"))) {
 			BeanDefinition clientBeanDefinition = parserContext.getRegistry()
 					.getBeanDefinition(amazonSqsClientBeanName);
-			if (!clientBeanDefinition.getBeanClassName()
-					.equals(BUFFERED_SQS_CLIENT_CLASS_NAME)) {
+			if (!clientBeanDefinition.getBeanClassName().equals(BUFFERED_SQS_CLIENT_CLASS_NAME)) {
 				BeanDefinitionBuilder bufferedClientBeanDefinitionBuilder = BeanDefinitionBuilder
 						.rootBeanDefinition(BUFFERED_SQS_CLIENT_CLASS_NAME);
-				bufferedClientBeanDefinitionBuilder
-						.addConstructorArgValue(clientBeanDefinition);
+				bufferedClientBeanDefinitionBuilder.addConstructorArgValue(clientBeanDefinition);
 				parserContext.getRegistry().removeBeanDefinition(amazonSqsClientBeanName);
-				parserContext.getRegistry().registerBeanDefinition(
-						amazonSqsClientBeanName,
+				parserContext.getRegistry().registerBeanDefinition(amazonSqsClientBeanName,
 						bufferedClientBeanDefinitionBuilder.getBeanDefinition());
 			}
 		}

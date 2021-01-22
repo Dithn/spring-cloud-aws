@@ -29,6 +29,7 @@ import static org.springframework.cloud.aws.core.config.AmazonWebserviceClientCo
 /**
  * @author Agim Emruli
  */
+@Deprecated
 public final class XmlWebserviceConfigurationUtils {
 
 	private static final String REGION_ATTRIBUTE_NAME = "region";
@@ -39,26 +40,24 @@ public final class XmlWebserviceConfigurationUtils {
 		// Avoid instantiation
 	}
 
-	public static String getCustomClientOrDefaultClientBeanName(Element element,
-			ParserContext parserContext, String customClientAttributeName,
-			String serviceClassName) {
+	public static String getCustomClientOrDefaultClientBeanName(Element element, ParserContext parserContext,
+			String customClientAttributeName, String serviceClassName) {
 		if (StringUtils.hasText(element.getAttribute(customClientAttributeName))) {
 			return element.getAttribute(customClientAttributeName);
 		}
 		else {
-			return parseAndRegisterDefaultAmazonWebserviceClient(element, parserContext,
-					serviceClassName).getBeanName();
+			return parseAndRegisterDefaultAmazonWebserviceClient(element, parserContext, serviceClassName)
+					.getBeanName();
 		}
 	}
 
-	public static AbstractBeanDefinition parseCustomClientElement(Element element,
-			ParserContext parserContext, String serviceClassName) {
+	public static AbstractBeanDefinition parseCustomClientElement(Element element, ParserContext parserContext,
+			String serviceClassName) {
 		Object source = parserContext.extractSource(element);
 		try {
 			return getAmazonWebserviceClientBeanDefinition(source, serviceClassName,
-					element.getAttribute(REGION_PROVIDER_ATTRIBUTE_NAME),
-					element.getAttribute(REGION_ATTRIBUTE_NAME),
-					parserContext.getRegistry());
+					element.getAttribute(REGION_PROVIDER_ATTRIBUTE_NAME), element.getAttribute(REGION_ATTRIBUTE_NAME),
+					null, parserContext.getRegistry(), null);
 		}
 		catch (Exception e) {
 			parserContext.getReaderContext().error(e.getMessage(), source, e);
@@ -66,14 +65,12 @@ public final class XmlWebserviceConfigurationUtils {
 		}
 	}
 
-	private static BeanDefinitionHolder parseAndRegisterDefaultAmazonWebserviceClient(
-			Element element, ParserContext parserContext, String serviceClassName) {
+	private static BeanDefinitionHolder parseAndRegisterDefaultAmazonWebserviceClient(Element element,
+			ParserContext parserContext, String serviceClassName) {
 		Object source = parserContext.extractSource(element);
 		try {
-			return registerAmazonWebserviceClient(source, parserContext.getRegistry(),
-					serviceClassName,
-					element.getAttribute(REGION_PROVIDER_ATTRIBUTE_NAME),
-					element.getAttribute(REGION_ATTRIBUTE_NAME));
+			return registerAmazonWebserviceClient(source, parserContext.getRegistry(), serviceClassName,
+					element.getAttribute(REGION_PROVIDER_ATTRIBUTE_NAME), element.getAttribute(REGION_ATTRIBUTE_NAME));
 		}
 		catch (Exception e) {
 			parserContext.getReaderContext().error(e.getMessage(), source, e);

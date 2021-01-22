@@ -28,10 +28,10 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
 /**
  * @author Agim Emruli
  */
+@Deprecated
 class SimpleEmailServiceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
-	private static final boolean JAVA_MAIL_PRESENT = ClassUtils.isPresent(
-			"javax.mail.Session",
+	private static final boolean JAVA_MAIL_PRESENT = ClassUtils.isPresent("javax.mail.Session",
 			SimpleEmailServiceBeanDefinitionParser.class.getClassLoader());
 
 	// @checkstyle:off
@@ -49,10 +49,9 @@ class SimpleEmailServiceBeanDefinitionParser extends AbstractSingleBeanDefinitio
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
-		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element,
-				parserContext, "amazon-ses", SIMPLE_EMAIL_CLIENT_CLASS_NAME));
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element, parserContext, "amazon-ses",
+				SIMPLE_EMAIL_CLIENT_CLASS_NAME));
 	}
 
 }

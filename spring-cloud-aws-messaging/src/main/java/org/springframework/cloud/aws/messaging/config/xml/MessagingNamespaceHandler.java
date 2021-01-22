@@ -27,20 +27,19 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
  * @since 1.0
  */
 @SuppressWarnings("UnusedDeclaration")
+@Deprecated
 public class MessagingNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("annotation-driven-queue-listener",
 				new AnnotationDrivenQueueListenerBeanDefinitionParser());
-		registerBeanDefinitionParser("queue-messaging-template",
-				new QueueMessagingTemplateBeanDefinitionParser());
+		registerBeanDefinitionParser("queue-messaging-template", new QueueMessagingTemplateBeanDefinitionParser());
 		registerBeanDefinitionParser("notification-messaging-template",
 				new NotificationMessagingTemplateBeanDefinitionParser());
 		registerBeanDefinitionParser("notification-argument-resolver",
 				new NotificationArgumentResolverBeanDefinitionParser());
-		registerBeanDefinitionParser("sqs-async-client",
-				new SqsAsyncClientBeanDefinitionParser());
+		registerBeanDefinitionParser("sqs-async-client", new SqsAsyncClientBeanDefinitionParser());
 	}
 
 }

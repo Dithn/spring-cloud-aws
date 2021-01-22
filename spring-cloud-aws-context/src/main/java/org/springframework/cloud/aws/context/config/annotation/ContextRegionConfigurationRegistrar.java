@@ -27,28 +27,24 @@ import static org.springframework.cloud.aws.context.config.support.ContextConfig
 
 /**
  * @author Agim Emruli
+ * @deprecated use auto-configuration
  */
 @Configuration(proxyBeanMethods = false)
-public class ContextRegionConfigurationRegistrar
-		implements ImportBeanDefinitionRegistrar {
+@Deprecated
+public class ContextRegionConfigurationRegistrar implements ImportBeanDefinitionRegistrar {
 
 	@Override
-	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
-			BeanDefinitionRegistry registry) {
+	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 		AnnotationAttributes annotationAttributes = AnnotationAttributes
-				.fromMap(importingClassMetadata.getAnnotationAttributes(
-						EnableContextRegion.class.getName(), false));
+				.fromMap(importingClassMetadata.getAnnotationAttributes(EnableContextRegion.class.getName(), false));
 		Assert.notNull(annotationAttributes,
-				"@EnableRegionProvider is not present on importing class "
-						+ importingClassMetadata.getClassName());
+				"@EnableRegionProvider is not present on importing class " + importingClassMetadata.getClassName());
 
 		boolean autoDetect = annotationAttributes.getBoolean("autoDetect");
-		boolean useDefaultAwsRegionChain = annotationAttributes
-				.getBoolean("useDefaultAwsRegionChain");
+		boolean useDefaultAwsRegionChain = annotationAttributes.getBoolean("useDefaultAwsRegionChain");
 		String configuredRegion = annotationAttributes.getString("region");
 
-		registerRegionProvider(registry, autoDetect, useDefaultAwsRegionChain,
-				configuredRegion);
+		registerRegionProvider(registry, autoDetect, useDefaultAwsRegionChain, configuredRegion);
 	}
 
 }

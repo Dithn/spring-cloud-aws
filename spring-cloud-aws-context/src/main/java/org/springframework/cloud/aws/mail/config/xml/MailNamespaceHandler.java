@@ -21,12 +21,12 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 /**
  * @author Agim Emruli
  */
+@Deprecated
 public class MailNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
-		registerBeanDefinitionParser("mail-sender",
-				new SimpleEmailServiceBeanDefinitionParser());
+		registerBeanDefinitionParser("mail-sender", new SimpleEmailServiceBeanDefinitionParser());
 	}
 
 }

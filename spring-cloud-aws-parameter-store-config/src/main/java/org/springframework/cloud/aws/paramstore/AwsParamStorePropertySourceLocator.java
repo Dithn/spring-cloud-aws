@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2019 the original author or authors.
+ * Copyright 2013-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.springframework.cloud.aws.paramstore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement;
 import org.apache.commons.logging.Log;
@@ -30,7 +31,6 @@ import org.springframework.core.env.CompositePropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Builds a {@link CompositePropertySource} with various
@@ -41,6 +41,8 @@ import org.springframework.util.ReflectionUtils;
  * characters for a parameter value.
  *
  * @author Joris Kuipers
+ * @author Matej Nedic
+ * @author Eddú Meléndez
  * @since 2.0.0
  */
 public class AwsParamStorePropertySourceLocator implements PropertySourceLocator {
@@ -49,7 +51,7 @@ public class AwsParamStorePropertySourceLocator implements PropertySourceLocator
 
 	private AwsParamStoreProperties properties;
 
-	private List<String> contexts = new ArrayList<>();
+	private final Set<String> contexts = new LinkedHashSet<>();
 
 	private Log logger = LogFactory.getLog(getClass());
 
@@ -60,7 +62,7 @@ public class AwsParamStorePropertySourceLocator implements PropertySourceLocator
 	}
 
 	public List<String> getContexts() {
-		return contexts;
+		return new ArrayList<>(contexts);
 	}
 
 	@Override
@@ -71,63 +73,22 @@ public class AwsParamStorePropertySourceLocator implements PropertySourceLocator
 
 		ConfigurableEnvironment env = (ConfigurableEnvironment) environment;
 
-		String appName = properties.getName();
-
-		if (appName == null) {
-			appName = env.getProperty("spring.application.name");
-		}
+		AwsParamStorePropertySources sources = new AwsParamStorePropertySources(this.properties, this.logger);
 
 		List<String> profiles = Arrays.asList(env.getActiveProfiles());
+		this.contexts.addAll(sources.getAutomaticContexts(profiles));
 
-		String prefix = this.properties.getPrefix();
-
-		String defaultContext = prefix + "/" + this.properties.getDefaultContext();
-		this.contexts.add(defaultContext + "/");
-		addProfiles(this.contexts, defaultContext, profiles);
-
-		String baseContext = prefix + "/" + appName;
-		this.contexts.add(baseContext + "/");
-		addProfiles(this.contexts, baseContext, profiles);
-
-		Collections.reverse(this.contexts);
-
-		CompositePropertySource composite = new CompositePropertySource(
-				"aws-param-store");
+		CompositePropertySource composite = new CompositePropertySource("aws-param-store");
 
 		for (String propertySourceContext : this.contexts) {
-			try {
-				composite.addPropertySource(create(propertySourceContext));
-			}
-			catch (Exception e) {
-				if (this.properties.isFailFast()) {
-					logger.error(
-							"Fail fast is set and there was an error reading configuration from AWS Parameter Store:\n"
-									+ e.getMessage());
-					ReflectionUtils.rethrowRuntimeException(e);
-				}
-				else {
-					logger.warn("Unable to load AWS config from " + propertySourceContext,
-							e);
-				}
+			PropertySource<AWSSimpleSystemsManagement> propertySource = sources
+					.createPropertySource(propertySourceContext, !this.properties.isFailFast(), this.ssmClient);
+			if (propertySource != null) {
+				composite.addPropertySource(propertySource);
 			}
 		}
 
 		return composite;
-	}
-
-	private AwsParamStorePropertySource create(String context) {
-		AwsParamStorePropertySource propertySource = new AwsParamStorePropertySource(
-				context, this.ssmClient);
-		propertySource.init();
-		return propertySource;
-	}
-
-	private void addProfiles(List<String> contexts, String baseContext,
-			List<String> profiles) {
-		for (String profile : profiles) {
-			contexts.add(
-					baseContext + this.properties.getProfileSeparator() + profile + "/");
-		}
 	}
 
 }

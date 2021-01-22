@@ -30,8 +30,8 @@ import static org.springframework.cloud.aws.messaging.config.xml.BufferedSqsClie
 /**
  * @author Alain Sahli
  */
-public class QueueMessagingTemplateBeanDefinitionParser
-		extends AbstractSingleBeanDefinitionParser {
+@Deprecated
+public class QueueMessagingTemplateBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	private static final String DEFAULT_DESTINATION_ATTRIBUTE = "default-destination";
 
@@ -43,23 +43,20 @@ public class QueueMessagingTemplateBeanDefinitionParser
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
-		String amazonSqsClientBeanName = getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(
-				element, parserContext);
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+		String amazonSqsClientBeanName = getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(element,
+				parserContext);
 
 		if (StringUtils.hasText(element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE))) {
-			builder.addPropertyValue("defaultDestinationName",
-					element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE));
+			builder.addPropertyValue("defaultDestinationName", element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE));
 		}
 
 		builder.addConstructorArgReference(amazonSqsClientBeanName);
-		builder.addConstructorArgReference(GlobalBeanDefinitionUtils
-				.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
+		builder.addConstructorArgReference(
+				GlobalBeanDefinitionUtils.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
 
 		if (StringUtils.hasText(element.getAttribute(MESSAGE_CONVERTER_ATTRIBUTE))) {
-			builder.addConstructorArgReference(
-					element.getAttribute(MESSAGE_CONVERTER_ATTRIBUTE));
+			builder.addConstructorArgReference(element.getAttribute(MESSAGE_CONVERTER_ATTRIBUTE));
 		}
 	}
 

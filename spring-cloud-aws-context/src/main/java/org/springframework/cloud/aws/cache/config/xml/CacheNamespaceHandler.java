@@ -21,6 +21,7 @@ import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 /**
  * @author Agim Emruli
  */
+@Deprecated
 public class CacheNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override

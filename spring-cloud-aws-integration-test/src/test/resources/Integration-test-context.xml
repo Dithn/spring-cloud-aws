@@ -27,8 +27,8 @@
                            http://www.springframework.org/schema/cloud/aws/context/spring-cloud-aws-context.xsd">
 
 	<aws-context:context-credentials>
-		<aws-context:simple-credentials access-key="${cloud.aws.credentials.accessKey}"
-										secret-key="${cloud.aws.credentials.secretKey}"/>
+		<aws-context:simple-credentials access-key="${aws-integration-tests.access-key}"
+										secret-key="${aws-integration-tests.secret-key}"/>
 	</aws-context:context-credentials>
 
 	<aws-context:context-region region="eu-west-1"/>
@@ -36,7 +36,7 @@
 	<context:property-placeholder location="file://${els.config.dir}/access.properties"/>
 
 	<bean id="testStackEnvironment"
-		  class="org.springframework.cloud.aws.support.TestStackEnvironment">
+		  class="org.springframework.cloud.aws.it.support.TestStackEnvironment">
 		<!--suppress SpringModelInspection -->
 		<constructor-arg name="amazonCloudFormationClient" ref="amazonCloudFormation"/>
 	</bean>
@@ -45,12 +45,12 @@
 									 user-tags-map="stackTags"/>
 
 	<bean id="testStackInstanceIdService"
-		  class="org.springframework.cloud.aws.support.TestStackInstanceIdService"
+		  class="org.springframework.cloud.aws.it.support.TestStackInstanceIdService"
 		  factory-method="fromStackOutputKey">
 		<constructor-arg name="stackName"
-						 value="#{T(org.springframework.cloud.aws.support.TestStackEnvironment).DEFAULT_STACK_NAME}"/>
+						 value="#{T(org.springframework.cloud.aws.it.support.TestStackEnvironment).DEFAULT_STACK_NAME}"/>
 		<constructor-arg name="outputKey"
-						 value="#{T(org.springframework.cloud.aws.support.TestStackEnvironment).INSTANCE_ID_STACK_OUTPUT_KEY}"/>
+						 value="#{T(org.springframework.cloud.aws.it.support.TestStackEnvironment).INSTANCE_ID_STACK_OUTPUT_KEY}"/>
 		<!--suppress SpringModelInspection -->
 		<constructor-arg name="amazonCloudFormationClient" ref="amazonCloudFormation"/>
 	</bean>

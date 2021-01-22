@@ -17,7 +17,6 @@
 package org.springframework.cloud.aws.context.config.annotation;
 
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.cloud.aws.context.annotation.ConditionalOnAwsCloudEnvironment;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -28,23 +27,20 @@ import static org.springframework.cloud.aws.context.config.support.ContextConfig
 
 /**
  * @author Agim Emruli
+ * @deprecated use auto-configuration
  */
 @SuppressWarnings("NonFinalUtilityClass")
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnAwsCloudEnvironment
+@Deprecated
 public class ContextInstanceDataConfiguration implements ImportBeanDefinitionRegistrar {
 
 	@Override
-	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata,
-			BeanDefinitionRegistry registry) {
-		AnnotationAttributes annotationAttributes = AnnotationAttributes
-				.fromMap(importingClassMetadata.getAnnotationAttributes(
-						EnableContextInstanceData.class.getName(), false));
-		Assert.notNull(annotationAttributes,
-				"@EnableContextInstanceData is not present on importing class "
-						+ importingClassMetadata.getClassName());
-		registerInstanceDataPropertySource(registry,
-				annotationAttributes.getString("valueSeparator"),
+	public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+		AnnotationAttributes annotationAttributes = AnnotationAttributes.fromMap(
+				importingClassMetadata.getAnnotationAttributes(EnableContextInstanceData.class.getName(), false));
+		Assert.notNull(annotationAttributes, "@EnableContextInstanceData is not present on importing class "
+				+ importingClassMetadata.getClassName());
+		registerInstanceDataPropertySource(registry, annotationAttributes.getString("valueSeparator"),
 				annotationAttributes.getString("attributeSeparator"));
 	}
 

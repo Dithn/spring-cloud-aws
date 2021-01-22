@@ -30,8 +30,8 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
 /**
  * @author Alain Sahli
  */
-public class NotificationMessagingTemplateBeanDefinitionParser
-		extends AbstractSingleBeanDefinitionParser {
+@Deprecated
+public class NotificationMessagingTemplateBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	private static final String DEFAULT_DESTINATION_ATTRIBUTE = "default-destination";
 
@@ -43,17 +43,15 @@ public class NotificationMessagingTemplateBeanDefinitionParser
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 		if (StringUtils.hasText(element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE))) {
-			builder.addPropertyValue("defaultDestinationName",
-					element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE));
+			builder.addPropertyValue("defaultDestinationName", element.getAttribute(DEFAULT_DESTINATION_ATTRIBUTE));
 		}
 
-		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element,
-				parserContext, "amazon-sns", SNS_CLIENT_CLASS_NAME));
-		builder.addConstructorArgReference(GlobalBeanDefinitionUtils
-				.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
+		builder.addConstructorArgReference(
+				getCustomClientOrDefaultClientBeanName(element, parserContext, "amazon-sns", SNS_CLIENT_CLASS_NAME));
+		builder.addConstructorArgReference(
+				GlobalBeanDefinitionUtils.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
 	}
 
 }

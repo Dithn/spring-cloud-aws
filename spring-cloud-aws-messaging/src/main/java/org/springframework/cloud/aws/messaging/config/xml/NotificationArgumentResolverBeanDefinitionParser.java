@@ -27,8 +27,8 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
 /**
  * @author Agim Emruli
  */
-class NotificationArgumentResolverBeanDefinitionParser
-		extends AbstractSingleBeanDefinitionParser {
+@Deprecated
+class NotificationArgumentResolverBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	@Override
 	protected String getBeanClassName(Element element) {
@@ -36,11 +36,9 @@ class NotificationArgumentResolverBeanDefinitionParser
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
-		builder.addConstructorArgReference(
-				getCustomClientOrDefaultClientBeanName(element, parserContext,
-						"amazon-sns", "com.amazonaws.services.sns.AmazonSNSClient"));
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element, parserContext, "amazon-sns",
+				"com.amazonaws.services.sns.AmazonSNSClient"));
 	}
 
 }

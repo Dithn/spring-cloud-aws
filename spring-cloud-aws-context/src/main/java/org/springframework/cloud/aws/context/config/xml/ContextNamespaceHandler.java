@@ -27,20 +27,17 @@ import org.springframework.cloud.aws.core.support.documentation.RuntimeUse;
  * @since 1.0
  */
 @RuntimeUse
+@Deprecated
 public class ContextNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
-		registerBeanDefinitionParser("context-credentials",
-				new ContextCredentialsBeanDefinitionParser());
-		registerBeanDefinitionParser("context-resource-loader",
-				new ContextResourceLoaderBeanDefinitionParser());
-		registerBeanDefinitionParser("context-region",
-				new ContextRegionBeanDefinitionParser());
+		registerBeanDefinitionParser("context-credentials", new ContextCredentialsBeanDefinitionParser());
+		registerBeanDefinitionParser("context-resource-loader", new ContextResourceLoaderBeanDefinitionParser());
+		registerBeanDefinitionParser("context-region", new ContextRegionBeanDefinitionParser());
 		registerBeanDefinitionParser("context-instance-data",
 				new ContextInstanceDataPropertySourceBeanDefinitionParser());
-		registerBeanDefinitionParser("stack-configuration",
-				new StackConfigurationBeanDefinitionParser());
+		registerBeanDefinitionParser("stack-configuration", new StackConfigurationBeanDefinitionParser());
 	}
 
 }

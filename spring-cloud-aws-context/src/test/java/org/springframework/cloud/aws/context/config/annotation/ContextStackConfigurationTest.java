@@ -26,8 +26,8 @@ import com.amazonaws.services.cloudformation.model.ListStackResourcesResult;
 import com.amazonaws.services.cloudformation.model.StackResource;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import org.springframework.cloud.aws.context.MetaDataServer;
@@ -38,12 +38,12 @@ import org.springframework.context.annotation.Configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ContextStackConfigurationTest {
+class ContextStackConfigurationTest {
 
 	private AnnotationConfigApplicationContext context;
 
-	@After
-	public void tearDown() throws Exception {
+	@AfterEach
+	void tearDown() throws Exception {
 		if (this.context != null) {
 			this.context.close();
 		}
@@ -52,22 +52,19 @@ public class ContextStackConfigurationTest {
 	}
 
 	@Test
-	public void stackRegistry_noStackNameConfigured_returnsAutoConfiguredStackRegistry()
-			throws Exception {
+	void stackRegistry_noStackNameConfigured_returnsAutoConfiguredStackRegistry() throws Exception {
 		// Arrange
 		this.context = new AnnotationConfigApplicationContext();
 		this.context.register(ApplicationConfigurationWithEmptyStackName.class);
 		HttpServer httpServer = MetaDataServer.setupHttpServer();
-		HttpContext httpContext = httpServer.createContext(
-				"/latest/meta-data/instance-id",
+		HttpContext httpContext = httpServer.createContext("/latest/meta-data/instance-id",
 				new MetaDataServer.HttpResponseWriterHandler("test"));
 
 		// Act
 		this.context.refresh();
 
 		// Assert
-		StackResourceRegistry stackResourceRegistry = this.context
-				.getBean(StackResourceRegistry.class);
+		StackResourceRegistry stackResourceRegistry = this.context.getBean(StackResourceRegistry.class);
 		assertThat(stackResourceRegistry).isNotNull();
 		assertThat(stackResourceRegistry.getStackName()).isEqualTo("testStack");
 
@@ -75,8 +72,7 @@ public class ContextStackConfigurationTest {
 	}
 
 	@Test
-	public void stackRegistry_stackNameConfigured_returnsConfiguredStackRegistryForName()
-			throws Exception {
+	void stackRegistry_stackNameConfigured_returnsConfiguredStackRegistryForName() throws Exception {
 		// Arrange
 		this.context = new AnnotationConfigApplicationContext();
 		this.context.register(ManualConfigurationStackRegistryTestConfiguration.class);
@@ -85,8 +81,7 @@ public class ContextStackConfigurationTest {
 		this.context.refresh();
 
 		// Assert
-		StackResourceRegistry stackResourceRegistry = this.context
-				.getBean(StackResourceRegistry.class);
+		StackResourceRegistry stackResourceRegistry = this.context.getBean(StackResourceRegistry.class);
 		assertThat(stackResourceRegistry).isNotNull();
 		assertThat(stackResourceRegistry.getStackName()).isEqualTo("manualStackName");
 	}
@@ -96,17 +91,15 @@ public class ContextStackConfigurationTest {
 	static class ApplicationConfigurationWithEmptyStackName {
 
 		@Bean
-		public AmazonCloudFormation amazonCloudFormation() {
-			AmazonCloudFormation amazonCloudFormation = Mockito
-					.mock(AmazonCloudFormation.class);
-			Mockito.when(amazonCloudFormation.describeStackResources(
-					new DescribeStackResourcesRequest().withPhysicalResourceId("test")))
-					.thenReturn(new DescribeStackResourcesResult().withStackResources(
-							new StackResource().withStackName("testStack")));
-			Mockito.when(amazonCloudFormation.listStackResources(
-					new ListStackResourcesRequest().withStackName("testStack")))
-					.thenReturn(new ListStackResourcesResult()
-							.withStackResourceSummaries(Collections.emptyList()));
+		AmazonCloudFormation amazonCloudFormation() {
+			AmazonCloudFormation amazonCloudFormation = Mockito.mock(AmazonCloudFormation.class);
+			Mockito.when(amazonCloudFormation
+					.describeStackResources(new DescribeStackResourcesRequest().withPhysicalResourceId("test")))
+					.thenReturn(new DescribeStackResourcesResult()
+							.withStackResources(new StackResource().withStackName("testStack")));
+			Mockito.when(
+					amazonCloudFormation.listStackResources(new ListStackResourcesRequest().withStackName("testStack")))
+					.thenReturn(new ListStackResourcesResult().withStackResourceSummaries(Collections.emptyList()));
 			return amazonCloudFormation;
 		}
 
@@ -117,13 +110,11 @@ public class ContextStackConfigurationTest {
 	static class ManualConfigurationStackRegistryTestConfiguration {
 
 		@Bean
-		public AmazonCloudFormation amazonCloudFormation() {
-			AmazonCloudFormation amazonCloudFormation = Mockito
-					.mock(AmazonCloudFormation.class);
-			Mockito.when(amazonCloudFormation.listStackResources(
-					new ListStackResourcesRequest().withStackName("manualStackName")))
-					.thenReturn(new ListStackResourcesResult()
-							.withStackResourceSummaries(Collections.emptyList()));
+		AmazonCloudFormation amazonCloudFormation() {
+			AmazonCloudFormation amazonCloudFormation = Mockito.mock(AmazonCloudFormation.class);
+			Mockito.when(amazonCloudFormation
+					.listStackResources(new ListStackResourcesRequest().withStackName("manualStackName")))
+					.thenReturn(new ListStackResourcesResult().withStackResourceSummaries(Collections.emptyList()));
 			return amazonCloudFormation;
 		}
 

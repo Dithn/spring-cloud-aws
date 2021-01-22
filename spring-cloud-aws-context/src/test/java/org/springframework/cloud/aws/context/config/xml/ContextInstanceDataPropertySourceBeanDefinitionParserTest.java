@@ -21,9 +21,9 @@ import java.lang.reflect.Field;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanReference;
@@ -45,23 +45,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 
 	@Test
-	public void parseInternal_singleElementDefined_beanDefinitionCreated()
-			throws Exception {
+	public void parseInternal_singleElementDefined_beanDefinitionCreated() throws Exception {
 		// Arrange
 		HttpServer httpServer = MetaDataServer.setupHttpServer();
-		HttpContext instanceIdHttpContext = httpServer.createContext(
-				"/latest/meta-data/instance-id",
+		HttpContext instanceIdHttpContext = httpServer.createContext("/latest/meta-data/instance-id",
 				new MetaDataServer.HttpResponseWriterHandler("testInstanceId"));
 		DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Act
-		reader.loadBeanDefinitions(new ClassPathResource(
-				getClass().getSimpleName() + "-context.xml", getClass()));
+		reader.loadBeanDefinitions(new ClassPathResource(getClass().getSimpleName() + "-context.xml", getClass()));
 
 		// Assert
-		BeanFactoryPostProcessor postProcessor = beanFactory.getBean(
-				"AmazonEc2InstanceDataPropertySourcePostProcessor",
+		BeanFactoryPostProcessor postProcessor = beanFactory.getBean("AmazonEc2InstanceDataPropertySourcePostProcessor",
 				BeanFactoryPostProcessor.class);
 		assertThat(postProcessor).isNotNull();
 		assertThat(beanFactory.getBeanDefinitionCount()).isEqualTo(1);
@@ -70,24 +66,19 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 	}
 
 	@Test
-	public void parseInternal_missingAwsCloudEnvironment_missingBeanDefinition()
-			throws Exception {
+	public void parseInternal_missingAwsCloudEnvironment_missingBeanDefinition() throws Exception {
 		// Arrange
 		HttpServer httpServer = MetaDataServer.setupHttpServer();
-		HttpContext instanceIdHttpContext = httpServer.createContext(
-				"/latest/meta-data/instance-id",
+		HttpContext instanceIdHttpContext = httpServer.createContext("/latest/meta-data/instance-id",
 				new MetaDataServer.HttpResponseWriterHandler(null));
 		DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Act
-		reader.loadBeanDefinitions(new ClassPathResource(
-				getClass().getSimpleName() + "-context.xml", getClass()));
+		reader.loadBeanDefinitions(new ClassPathResource(getClass().getSimpleName() + "-context.xml", getClass()));
 
 		// Assert
-		assertThat(beanFactory
-				.containsBean("AmazonEc2InstanceDataPropertySourcePostProcessor"))
-						.isFalse();
+		assertThat(beanFactory.containsBean("AmazonEc2InstanceDataPropertySourcePostProcessor")).isFalse();
 
 		httpServer.removeContext(instanceIdHttpContext);
 	}
@@ -100,14 +91,12 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Act
-		reader.loadBeanDefinitions(new ClassPathResource(
-				getClass().getSimpleName() + "-userTagsMap.xml", getClass()));
+		reader.loadBeanDefinitions(new ClassPathResource(getClass().getSimpleName() + "-userTagsMap.xml", getClass()));
 
 		// Assert
 		assertThat(beanFactory.containsBeanDefinition("myUserTags")).isTrue();
-		assertThat(beanFactory
-				.containsBeanDefinition(AmazonWebserviceClientConfigurationUtils
-						.getBeanName(AmazonEC2Client.class.getName()))).isTrue();
+		assertThat(beanFactory.containsBeanDefinition(
+				AmazonWebserviceClientConfigurationUtils.getBeanName(AmazonEC2Client.class.getName()))).isTrue();
 	}
 
 	@Test
@@ -118,20 +107,18 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Act
-		reader.loadBeanDefinitions(new ClassPathResource(
-				getClass().getSimpleName() + "-customEc2Client.xml", getClass()));
+		reader.loadBeanDefinitions(
+				new ClassPathResource(getClass().getSimpleName() + "-customEc2Client.xml", getClass()));
 
 		// Assert
 		assertThat(beanFactory.containsBeanDefinition("myUserTags")).isTrue();
 
-		ConstructorArgumentValues.ValueHolder valueHolder = beanFactory
-				.getBeanDefinition("myUserTags").getConstructorArgumentValues()
-				.getArgumentValue(0, BeanReference.class);
+		ConstructorArgumentValues.ValueHolder valueHolder = beanFactory.getBeanDefinition("myUserTags")
+				.getConstructorArgumentValues().getArgumentValue(0, BeanReference.class);
 		BeanReference beanReference = (BeanReference) valueHolder.getValue();
 		assertThat(beanReference.getBeanName()).isEqualTo("amazonEC2Client");
-		assertThat(beanFactory
-				.containsBeanDefinition(AmazonWebserviceClientConfigurationUtils
-						.getBeanName(AmazonEC2Client.class.getName()))).isFalse();
+		assertThat(beanFactory.containsBeanDefinition(
+				AmazonWebserviceClientConfigurationUtils.getBeanName(AmazonEC2Client.class.getName()))).isFalse();
 	}
 
 	// @checkstyle:off
@@ -141,8 +128,7 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 		// @checkstyle:on
 		// Arrange
 		HttpServer httpServer = MetaDataServer.setupHttpServer();
-		HttpContext instanceIdHttpContext = httpServer.createContext(
-				"/latest/meta-data/instance-id",
+		HttpContext instanceIdHttpContext = httpServer.createContext("/latest/meta-data/instance-id",
 				new MetaDataServer.HttpResponseWriterHandler("testInstanceId"));
 		HttpContext userDataHttpContext = httpServer.createContext("/latest/user-data",
 				new MetaDataServer.HttpResponseWriterHandler("a=b/c=d"));
@@ -152,8 +138,7 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 
 		// Act
 		reader.loadBeanDefinitions(new ClassPathResource(
-				getClass().getSimpleName() + "-customAttributeAndValueSeparator.xml",
-				getClass()));
+				getClass().getSimpleName() + "-customAttributeAndValueSeparator.xml", getClass()));
 
 		applicationContext.refresh();
 
@@ -165,16 +150,15 @@ public class ContextInstanceDataPropertySourceBeanDefinitionParserTest {
 		httpServer.removeContext(userDataHttpContext);
 	}
 
-	@Before
+	@BeforeEach
 	public void restContextInstanceDataCondition() throws IllegalAccessException {
-		Field field = ReflectionUtils.findField(AwsCloudEnvironmentCheckUtils.class,
-				"isCloudEnvironment");
+		Field field = ReflectionUtils.findField(AwsCloudEnvironmentCheckUtils.class, "isCloudEnvironment");
 		assertThat(field).isNotNull();
 		ReflectionUtils.makeAccessible(field);
 		field.set(null, null);
 	}
 
-	@After
+	@AfterEach
 	public void destroyMetaDataServer() throws Exception {
 		MetaDataServer.shutdownHttpServer();
 	}

@@ -34,49 +34,45 @@ import org.springframework.core.env.EnumerablePropertySource;
  * from the AWS Parameter Store using the provided SSM client.
  *
  * @author Joris Kuipers
+ * @author Eddú Meléndez
  * @since 2.0.0
  */
-public class AwsParamStorePropertySource
-		extends EnumerablePropertySource<AWSSimpleSystemsManagement> {
+public class AwsParamStorePropertySource extends EnumerablePropertySource<AWSSimpleSystemsManagement> {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(AwsParamStorePropertySource.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AwsParamStorePropertySource.class);
 
-	private String context;
+	private final String context;
 
-	private Map<String, Object> properties = new LinkedHashMap<>();
+	private final Map<String, Object> properties = new LinkedHashMap<>();
 
-	public AwsParamStorePropertySource(String context,
-			AWSSimpleSystemsManagement ssmClient) {
+	public AwsParamStorePropertySource(String context, AWSSimpleSystemsManagement ssmClient) {
 		super(context, ssmClient);
 		this.context = context;
 	}
 
 	public void init() {
-		GetParametersByPathRequest paramsRequest = new GetParametersByPathRequest()
-				.withPath(context).withRecursive(true).withWithDecryption(true);
+		GetParametersByPathRequest paramsRequest = new GetParametersByPathRequest().withPath(context)
+				.withRecursive(true).withWithDecryption(true);
 		getParameters(paramsRequest);
 	}
 
 	@Override
 	public String[] getPropertyNames() {
-		Set<String> strings = properties.keySet();
+		Set<String> strings = this.properties.keySet();
 		return strings.toArray(new String[strings.size()]);
 	}
 
 	@Override
 	public Object getProperty(String name) {
-		return properties.get(name);
+		return this.properties.get(name);
 	}
 
 	private void getParameters(GetParametersByPathRequest paramsRequest) {
-		GetParametersByPathResult paramsResult = source
-				.getParametersByPath(paramsRequest);
+		GetParametersByPathResult paramsResult = this.source.getParametersByPath(paramsRequest);
 		for (Parameter parameter : paramsResult.getParameters()) {
-			String key = parameter.getName().replace(context, "").replace('/', '.');
-			LOGGER.debug("Populating property retrieved from AWS Parameter Store: {}",
-					key);
-			properties.put(key, parameter.getValue());
+			String key = parameter.getName().replace(this.context, "").replace('/', '.');
+			LOGGER.debug("Populating property retrieved from AWS Parameter Store: {}", key);
+			this.properties.put(key, parameter.getValue());
 		}
 		if (paramsResult.getNextToken() != null) {
 			getParameters(paramsRequest.withNextToken(paramsResult.getNextToken()));

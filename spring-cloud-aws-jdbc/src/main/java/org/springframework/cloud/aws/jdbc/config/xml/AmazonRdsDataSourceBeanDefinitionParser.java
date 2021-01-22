@@ -48,6 +48,7 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
  * @author Agim Emruli
  * @since 1.0
  */
+@Deprecated
 class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	static final String DB_INSTANCE_IDENTIFIER = "db-instance-identifier";
@@ -78,37 +79,32 @@ class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionPars
 	 * @param element - The datasource element which may contain a pool-attributes element
 	 * @return - fully configured bean definition for the DataSourceFactory
 	 */
-	private static AbstractBeanDefinition createDataSourceFactoryBeanDefinition(
-			Element element) {
+	private static AbstractBeanDefinition createDataSourceFactoryBeanDefinition(Element element) {
 		BeanDefinitionBuilder datasourceFactoryBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(TomcatJdbcDataSourceFactory.class);
-		Element poolAttributes = DomUtils.getChildElementByTagName(element,
-				"pool-attributes");
+		Element poolAttributes = DomUtils.getChildElementByTagName(element, "pool-attributes");
 		if (poolAttributes != null) {
 			NamedNodeMap attributes = poolAttributes.getAttributes();
 			for (int i = 0, x = attributes.getLength(); i < x; i++) {
 				Node item = attributes.item(i);
-				datasourceFactoryBuilder.addPropertyValue(item.getNodeName(),
-						item.getNodeValue());
+				datasourceFactoryBuilder.addPropertyValue(item.getNodeName(), item.getNodeValue());
 			}
 		}
 
 		return datasourceFactoryBuilder.getBeanDefinition();
 	}
 
-	private static void registerUserTagsMapIfNecessary(Element element,
-			ParserContext parserContext, String rdsClientBeanName) {
+	private static void registerUserTagsMapIfNecessary(Element element, ParserContext parserContext,
+			String rdsClientBeanName) {
 		if (!StringUtils.hasText(element.getAttribute("user-tags-map"))) {
 			return;
 		}
 
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.genericBeanDefinition(USER_TAG_FACTORY_BEAN_CLASS_NAME);
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(USER_TAG_FACTORY_BEAN_CLASS_NAME);
 		builder.addConstructorArgReference(rdsClientBeanName);
 		builder.addConstructorArgValue(element.getAttribute(DB_INSTANCE_IDENTIFIER));
-		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element,
-				parserContext, "amazon-identity-management",
-				IDENTITY_MANAGEMENT_CLIENT_CLASS_NAME));
+		builder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element, parserContext,
+				"amazon-identity-management", IDENTITY_MANAGEMENT_CLIENT_CLASS_NAME));
 
 		// Use custom region-provider of data source
 		if (StringUtils.hasText(element.getAttribute("region"))) {
@@ -123,8 +119,7 @@ class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionPars
 					.genericBeanDefinition(MethodInvokingFactoryBean.class);
 			if (StringUtils.hasText(element.getAttribute("region-provider"))) {
 				beanDefinitionBuilder.addPropertyValue("targetObject",
-						new RuntimeBeanReference(
-								element.getAttribute("region-provider")));
+						new RuntimeBeanReference(element.getAttribute("region-provider")));
 			}
 			else {
 				beanDefinitionBuilder.addPropertyValue("targetObject",
@@ -139,22 +134,19 @@ class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionPars
 				.retrieveResourceIdResolverBeanName(parserContext.getRegistry());
 		builder.addPropertyReference("resourceIdResolver", resourceResolverBeanName);
 
-		parserContext.getRegistry().registerBeanDefinition(
-				element.getAttribute("user-tags-map"), builder.getBeanDefinition());
+		parserContext.getRegistry().registerBeanDefinition(element.getAttribute("user-tags-map"),
+				builder.getBeanDefinition());
 	}
 
 	@Override
-	protected AbstractBeanDefinition parseInternal(Element element,
-			ParserContext parserContext) {
-		BeanDefinitionBuilder datasourceBuilder = getBeanDefinitionBuilderForDataSource(
-				element);
+	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+		BeanDefinitionBuilder datasourceBuilder = getBeanDefinitionBuilderForDataSource(element);
 
 		// Constructor (mandatory) args
-		String amazonRdsClientBeanName = getCustomClientOrDefaultClientBeanName(element,
-				parserContext, "amazon-rds", AMAZON_RDS_CLIENT_CLASS_NAME);
+		String amazonRdsClientBeanName = getCustomClientOrDefaultClientBeanName(element, parserContext, "amazon-rds",
+				AMAZON_RDS_CLIENT_CLASS_NAME);
 		datasourceBuilder.addConstructorArgReference(amazonRdsClientBeanName);
-		datasourceBuilder
-				.addConstructorArgValue(element.getAttribute(DB_INSTANCE_IDENTIFIER));
+		datasourceBuilder.addConstructorArgValue(element.getAttribute(DB_INSTANCE_IDENTIFIER));
 		datasourceBuilder.addConstructorArgValue(element.getAttribute(PASSWORD));
 
 		// optional args
@@ -163,19 +155,16 @@ class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionPars
 		}
 
 		if (StringUtils.hasText(element.getAttribute(DATABASE_NAME))) {
-			datasourceBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(DATABASE_NAME),
+			datasourceBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(DATABASE_NAME),
 					element.getAttribute(DATABASE_NAME));
 		}
 
-		datasourceBuilder.addPropertyValue("dataSourceFactory",
-				createDataSourceFactoryBeanDefinition(element));
+		datasourceBuilder.addPropertyValue("dataSourceFactory", createDataSourceFactoryBeanDefinition(element));
 
 		// Register registry to enable cloud formation support
 		String resourceResolverBeanName = GlobalBeanDefinitionUtils
 				.retrieveResourceIdResolverBeanName(parserContext.getRegistry());
-		datasourceBuilder.addPropertyReference("resourceIdResolver",
-				resourceResolverBeanName);
+		datasourceBuilder.addPropertyReference("resourceIdResolver", resourceResolverBeanName);
 
 		registerUserTagsMapIfNecessary(element, parserContext, amazonRdsClientBeanName);
 
@@ -184,21 +173,19 @@ class AmazonRdsDataSourceBeanDefinitionParser extends AbstractBeanDefinitionPars
 
 	private BeanDefinitionBuilder getBeanDefinitionBuilderForDataSource(Element element) {
 		BeanDefinitionBuilder datasourceBuilder;
-		if (Boolean.TRUE.toString()
-				.equalsIgnoreCase(element.getAttribute("read-replica-support"))) {
-			datasourceBuilder = BeanDefinitionBuilder.rootBeanDefinition(
-					AmazonRdsReadReplicaAwareDataSourceFactoryBean.class);
+		if (Boolean.TRUE.toString().equalsIgnoreCase(element.getAttribute("read-replica-support"))) {
+			datasourceBuilder = BeanDefinitionBuilder
+					.rootBeanDefinition(AmazonRdsReadReplicaAwareDataSourceFactoryBean.class);
 		}
 		else {
-			datasourceBuilder = BeanDefinitionBuilder
-					.rootBeanDefinition(AmazonRdsDataSourceFactoryBean.class);
+			datasourceBuilder = BeanDefinitionBuilder.rootBeanDefinition(AmazonRdsDataSourceFactoryBean.class);
 		}
 		return datasourceBuilder;
 	}
 
 	@Override
-	protected String resolveId(Element element, AbstractBeanDefinition definition,
-			ParserContext parserContext) throws BeanDefinitionStoreException {
+	protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext)
+			throws BeanDefinitionStoreException {
 		return element.getAttribute(DB_INSTANCE_IDENTIFIER);
 	}
 

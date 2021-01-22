@@ -16,7 +16,7 @@
 
 package org.springframework.cloud.aws.cache.redis;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import org.springframework.beans.factory.DisposableBean;
@@ -25,20 +25,17 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RedisCacheFactoryTest {
+class RedisCacheFactoryTest {
 
 	@Test
-	public void createCache_withMockedRedisConnectionFactory_createsAndDestroysConnectionFactory()
-			throws Exception {
+	void createCache_withMockedRedisConnectionFactory_createsAndDestroysConnectionFactory() throws Exception {
 		// Arrange
-		RedisConnectionFactory connectionFactory = Mockito.mock(
-				RedisConnectionFactory.class,
+		RedisConnectionFactory connectionFactory = Mockito.mock(RedisConnectionFactory.class,
 				Mockito.withSettings().extraInterfaces(DisposableBean.class));
 		RedisCacheFactory redisCacheFactory = new RedisCacheFactory() {
 
 			@Override
-			protected RedisConnectionFactory createConnectionClient(String hostName,
-					int port) {
+			protected RedisConnectionFactory createConnectionClient(String hostName, int port) {
 				assertThat(hostName).isEqualTo("someHost");
 				assertThat(port).isEqualTo(4711);
 				return connectionFactory;

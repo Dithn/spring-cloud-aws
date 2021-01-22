@@ -31,24 +31,22 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
  * @author Alain Sahli
  * @author Agim Emruli
  */
+@Deprecated
 public class SqsAsyncClientBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	@Override
-	protected AbstractBeanDefinition parseInternal(Element element,
-			ParserContext parserContext) {
-		AbstractBeanDefinition sqsAsyncClientDefinition = parseCustomClientElement(
-				element, parserContext,
+	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+		AbstractBeanDefinition sqsAsyncClientDefinition = parseCustomClientElement(element, parserContext,
 				BufferedSqsClientBeanDefinitionUtils.SQS_CLIENT_CLASS_NAME);
 		if (StringUtils.hasText(element.getAttribute("task-executor"))) {
-			BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(
-					ShutdownSuppressingExecutorServiceAdapter.class);
+			BeanDefinitionBuilder builder = BeanDefinitionBuilder
+					.genericBeanDefinition(ShutdownSuppressingExecutorServiceAdapter.class);
 			builder.addConstructorArgReference(element.getAttribute("task-executor"));
-			sqsAsyncClientDefinition.getPropertyValues().addPropertyValue("executor",
-					builder.getBeanDefinition());
+			sqsAsyncClientDefinition.getPropertyValues().addPropertyValue("executor", builder.getBeanDefinition());
 		}
 		if (Boolean.parseBoolean(element.getAttribute("buffered"))) {
-			BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(
-					BufferedSqsClientBeanDefinitionUtils.BUFFERED_SQS_CLIENT_CLASS_NAME);
+			BeanDefinitionBuilder builder = BeanDefinitionBuilder
+					.genericBeanDefinition(BufferedSqsClientBeanDefinitionUtils.BUFFERED_SQS_CLIENT_CLASS_NAME);
 			builder.addConstructorArgValue(sqsAsyncClientDefinition);
 			return builder.getBeanDefinition();
 		}

@@ -33,16 +33,15 @@ import static org.springframework.cloud.aws.messaging.endpoint.config.Notificati
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass("org.springframework.web.servlet.config.annotation.WebMvcConfigurer")
+@Deprecated
 public class SnsWebConfiguration {
 
 	@Bean
 	public WebMvcConfigurer snsWebMvcConfigurer(AmazonSNS amazonSns) {
 		return new WebMvcConfigurer() {
 			@Override
-			public void addArgumentResolvers(
-					List<HandlerMethodArgumentResolver> argumentResolvers) {
-				argumentResolvers
-						.add(getNotificationHandlerMethodArgumentResolver(amazonSns));
+			public void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+				argumentResolvers.add(getNotificationHandlerMethodArgumentResolver(amazonSns));
 			}
 		};
 	}

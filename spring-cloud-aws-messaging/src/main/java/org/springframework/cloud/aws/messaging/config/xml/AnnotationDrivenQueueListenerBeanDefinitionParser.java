@@ -44,8 +44,8 @@ import static org.springframework.cloud.aws.messaging.config.xml.BufferedSqsClie
  * @author Alain Sahli
  * @since 1.0
  */
-public class AnnotationDrivenQueueListenerBeanDefinitionParser
-		extends AbstractBeanDefinitionParser {
+@Deprecated
+public class AnnotationDrivenQueueListenerBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	private static final String TASK_EXECUTOR_ATTRIBUTE = "task-executor";
 
@@ -61,52 +61,46 @@ public class AnnotationDrivenQueueListenerBeanDefinitionParser
 
 	private static final String BACK_OFF_TIME = "back-off-time";
 
-	private static String getMessageHandlerBeanName(Element element,
-			ParserContext parserContext, String sqsClientBeanName) {
+	private static String getMessageHandlerBeanName(Element element, ParserContext parserContext,
+			String sqsClientBeanName) {
 		BeanDefinitionBuilder queueMessageHandlerDefinitionBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(QueueMessageHandler.class);
 
 		if (parserContext.getRegistry().containsBeanDefinition("jacksonObjectMapper")) {
-			queueMessageHandlerDefinitionBuilder
-					.addConstructorArgReference("jacksonObjectMapper");
+			queueMessageHandlerDefinitionBuilder.addConstructorArgReference("jacksonObjectMapper");
 		}
 		else {
-			BeanDefinitionBuilder mapper = BeanDefinitionBuilder.genericBeanDefinition(
-					"org.springframework.messaging.converter.MappingJackson2MessageConverter");
+			BeanDefinitionBuilder mapper = BeanDefinitionBuilder
+					.genericBeanDefinition("org.springframework.messaging.converter.MappingJackson2MessageConverter");
 			mapper.addPropertyValue("serializedPayloadClass", "java.lang.String");
 			mapper.addPropertyValue("strictContentTypeMatch", true);
-			queueMessageHandlerDefinitionBuilder
-					.addConstructorArgValue(mapper.getBeanDefinition());
+			queueMessageHandlerDefinitionBuilder.addConstructorArgValue(mapper.getBeanDefinition());
 		}
 
 		ManagedList<?> argumentResolvers = getArgumentResolvers(element, parserContext);
 		if (!argumentResolvers.isEmpty()) {
-			queueMessageHandlerDefinitionBuilder
-					.addPropertyValue("customArgumentResolvers", argumentResolvers);
+			queueMessageHandlerDefinitionBuilder.addPropertyValue("customArgumentResolvers", argumentResolvers);
 		}
 
-		ManagedList<BeanDefinition> returnValueHandlers = getReturnValueHandlers(element,
-				parserContext);
-		returnValueHandlers.add(createSendToHandlerMethodReturnValueHandlerBeanDefinition(
-				element, parserContext, sqsClientBeanName));
-		queueMessageHandlerDefinitionBuilder.addPropertyValue("customReturnValueHandlers",
-				returnValueHandlers);
+		ManagedList<BeanDefinition> returnValueHandlers = getReturnValueHandlers(element, parserContext);
+		returnValueHandlers.add(
+				createSendToHandlerMethodReturnValueHandlerBeanDefinition(element, parserContext, sqsClientBeanName));
+		queueMessageHandlerDefinitionBuilder.addPropertyValue("customReturnValueHandlers", returnValueHandlers);
 
-		String messageHandlerBeanName = parserContext.getReaderContext().generateBeanName(
-				queueMessageHandlerDefinitionBuilder.getBeanDefinition());
+		String messageHandlerBeanName = parserContext.getReaderContext()
+				.generateBeanName(queueMessageHandlerDefinitionBuilder.getBeanDefinition());
 		parserContext.getRegistry().registerBeanDefinition(messageHandlerBeanName,
 				queueMessageHandlerDefinitionBuilder.getBeanDefinition());
 
 		return messageHandlerBeanName;
 	}
 
-	private static AbstractBeanDefinition createSendToHandlerMethodReturnValueHandlerBeanDefinition(
-			Element element, ParserContext parserContext, String sqsClientBeanName) {
+	private static AbstractBeanDefinition createSendToHandlerMethodReturnValueHandlerBeanDefinition(Element element,
+			ParserContext parserContext, String sqsClientBeanName) {
 		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(SendToHandlerMethodReturnValueHandler.class);
 		if (StringUtils.hasText(element.getAttribute("send-to-message-template"))) {
-			beanDefinitionBuilder.addConstructorArgReference(
-					element.getAttribute("send-to-message-template"));
+			beanDefinitionBuilder.addConstructorArgReference(element.getAttribute("send-to-message-template"));
 		}
 		else {
 			// TODO consider creating a utils for setting up the queue messaging template
@@ -114,20 +108,17 @@ public class AnnotationDrivenQueueListenerBeanDefinitionParser
 			BeanDefinitionBuilder templateBuilder = BeanDefinitionBuilder
 					.rootBeanDefinition(QueueMessagingTemplate.class);
 			templateBuilder.addConstructorArgReference(sqsClientBeanName);
-			templateBuilder.addConstructorArgReference(GlobalBeanDefinitionUtils
-					.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
+			templateBuilder.addConstructorArgReference(
+					GlobalBeanDefinitionUtils.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
 
-			beanDefinitionBuilder
-					.addConstructorArgValue(templateBuilder.getBeanDefinition());
+			beanDefinitionBuilder.addConstructorArgValue(templateBuilder.getBeanDefinition());
 		}
 
 		return beanDefinitionBuilder.getBeanDefinition();
 	}
 
-	private static ManagedList<BeanDefinition> getArgumentResolvers(Element element,
-			ParserContext parserContext) {
-		Element resolversElement = DomUtils.getChildElementByTagName(element,
-				"argument-resolvers");
+	private static ManagedList<BeanDefinition> getArgumentResolvers(Element element, ParserContext parserContext) {
+		Element resolversElement = DomUtils.getChildElementByTagName(element, "argument-resolvers");
 		if (resolversElement != null) {
 			return extractBeanSubElements(resolversElement, parserContext);
 		}
@@ -136,10 +127,8 @@ public class AnnotationDrivenQueueListenerBeanDefinitionParser
 		}
 	}
 
-	private static ManagedList<BeanDefinition> getReturnValueHandlers(Element element,
-			ParserContext parserContext) {
-		Element handlersElement = DomUtils.getChildElementByTagName(element,
-				"return-value-handlers");
+	private static ManagedList<BeanDefinition> getReturnValueHandlers(Element element, ParserContext parserContext) {
+		Element handlersElement = DomUtils.getChildElementByTagName(element, "return-value-handlers");
 		if (handlersElement != null) {
 			return extractBeanSubElements(handlersElement, parserContext);
 		}
@@ -148,83 +137,69 @@ public class AnnotationDrivenQueueListenerBeanDefinitionParser
 		}
 	}
 
-	private static ManagedList<BeanDefinition> extractBeanSubElements(
-			Element parentElement, ParserContext parserContext) {
+	private static ManagedList<BeanDefinition> extractBeanSubElements(Element parentElement,
+			ParserContext parserContext) {
 		ManagedList<BeanDefinition> list = new ManagedList<>();
 		list.setSource(parserContext.extractSource(parentElement));
-		for (Element beanElement : DomUtils.getChildElementsByTagName(parentElement,
-				"bean")) {
-			BeanDefinitionHolder beanDef = parserContext.getDelegate()
-					.parseBeanDefinitionElement(beanElement);
-			beanDef = parserContext.getDelegate()
-					.decorateBeanDefinitionIfRequired(beanElement, beanDef);
+		for (Element beanElement : DomUtils.getChildElementsByTagName(parentElement, "bean")) {
+			BeanDefinitionHolder beanDef = parserContext.getDelegate().parseBeanDefinitionElement(beanElement);
+			beanDef = parserContext.getDelegate().decorateBeanDefinitionIfRequired(beanElement, beanDef);
 			list.add(beanDef.getBeanDefinition());
 		}
 		return list;
 	}
 
 	@Override
-	protected AbstractBeanDefinition parseInternal(Element element,
-			ParserContext parserContext) {
+	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
 		BeanDefinitionBuilder containerBuilder = BeanDefinitionBuilder
 				.genericBeanDefinition(SimpleMessageListenerContainer.class);
 
 		if (StringUtils.hasText(element.getAttribute(TASK_EXECUTOR_ATTRIBUTE))) {
-			containerBuilder.addPropertyReference(
-					Conventions.attributeNameToPropertyName(TASK_EXECUTOR_ATTRIBUTE),
+			containerBuilder.addPropertyReference(Conventions.attributeNameToPropertyName(TASK_EXECUTOR_ATTRIBUTE),
 					element.getAttribute(TASK_EXECUTOR_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(MAX_NUMBER_OF_MESSAGES_ATTRIBUTE))) {
-			containerBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(
-							MAX_NUMBER_OF_MESSAGES_ATTRIBUTE),
+			containerBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(MAX_NUMBER_OF_MESSAGES_ATTRIBUTE),
 					element.getAttribute(MAX_NUMBER_OF_MESSAGES_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(VISIBILITY_TIMEOUT_ATTRIBUTE))) {
-			containerBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(VISIBILITY_TIMEOUT_ATTRIBUTE),
+			containerBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(VISIBILITY_TIMEOUT_ATTRIBUTE),
 					element.getAttribute(VISIBILITY_TIMEOUT_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(WAIT_TIME_OUT_ATTRIBUTE))) {
-			containerBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(WAIT_TIME_OUT_ATTRIBUTE),
+			containerBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(WAIT_TIME_OUT_ATTRIBUTE),
 					element.getAttribute(WAIT_TIME_OUT_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(AUTO_STARTUP_ATTRIBUTE))) {
-			containerBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(AUTO_STARTUP_ATTRIBUTE),
+			containerBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(AUTO_STARTUP_ATTRIBUTE),
 					element.getAttribute(AUTO_STARTUP_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(DESTINATION_RESOLVER_ATTRIBUTE))) {
 			containerBuilder.addPropertyReference(
-					Conventions
-							.attributeNameToPropertyName(DESTINATION_RESOLVER_ATTRIBUTE),
+					Conventions.attributeNameToPropertyName(DESTINATION_RESOLVER_ATTRIBUTE),
 					element.getAttribute(DESTINATION_RESOLVER_ATTRIBUTE));
 		}
 
 		if (StringUtils.hasText(element.getAttribute(BACK_OFF_TIME))) {
-			containerBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(BACK_OFF_TIME),
+			containerBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(BACK_OFF_TIME),
 					element.getAttribute(BACK_OFF_TIME));
 		}
 
-		String amazonSqsClientBeanName = getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(
-				element, parserContext);
+		String amazonSqsClientBeanName = getCustomAmazonSqsClientOrDecoratedDefaultSqsClientBeanName(element,
+				parserContext);
 
-		containerBuilder.addPropertyReference(
-				Conventions.attributeNameToPropertyName("amazon-sqs"),
+		containerBuilder.addPropertyReference(Conventions.attributeNameToPropertyName("amazon-sqs"),
 				amazonSqsClientBeanName);
 
 		containerBuilder.addPropertyReference("resourceIdResolver",
-				GlobalBeanDefinitionUtils
-						.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
-		containerBuilder.addPropertyReference("messageHandler", getMessageHandlerBeanName(
-				element, parserContext, amazonSqsClientBeanName));
+				GlobalBeanDefinitionUtils.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
+		containerBuilder.addPropertyReference("messageHandler",
+				getMessageHandlerBeanName(element, parserContext, amazonSqsClientBeanName));
 
 		return containerBuilder.getBeanDefinition();
 	}

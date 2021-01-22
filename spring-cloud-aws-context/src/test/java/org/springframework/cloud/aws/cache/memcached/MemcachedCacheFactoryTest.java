@@ -16,24 +16,22 @@
 
 package org.springframework.cloud.aws.cache.memcached;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.cloud.aws.cache.config.TestMemcacheServer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MemcachedCacheFactoryTest {
+class MemcachedCacheFactoryTest {
 
 	@Test
-	public void createCache_withLocalMemCachedClient_createSimpleSpringMemcached()
-			throws Exception {
+	void createCache_withLocalMemCachedClient_createSimpleSpringMemcached() throws Exception {
 		// Arrange
 		int memCachedPort = TestMemcacheServer.startServer();
 		MemcachedCacheFactory cacheFactory = new MemcachedCacheFactory();
 
 		// Act
-		SimpleSpringMemcached cache = cacheFactory.createCache("test", "localhost",
-				memCachedPort);
+		SimpleSpringMemcached cache = cacheFactory.createCache("test", "localhost", memCachedPort);
 
 		// Assert
 		assertThat(cache).isNotNull();
@@ -47,16 +45,14 @@ public class MemcachedCacheFactoryTest {
 	}
 
 	@Test
-	public void createCache_WithExpiryTime_createSimpleSpringMemcachedWithExpiryTime()
-			throws Exception {
+	void createCache_WithExpiryTime_createSimpleSpringMemcachedWithExpiryTime() throws Exception {
 		// Arrange
 		int memCachedPort = TestMemcacheServer.startServer();
 		MemcachedCacheFactory cacheFactory = new MemcachedCacheFactory();
 		cacheFactory.setExpiryTime(1);
 
 		// Act
-		SimpleSpringMemcached cache = cacheFactory.createCache("test", "localhost",
-				memCachedPort);
+		SimpleSpringMemcached cache = cacheFactory.createCache("test", "localhost", memCachedPort);
 
 		// Assert
 		assertThat(cache).isNotNull();

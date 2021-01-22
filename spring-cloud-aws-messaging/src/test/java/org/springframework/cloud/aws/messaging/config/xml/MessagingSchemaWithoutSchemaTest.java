@@ -16,7 +16,7 @@
 
 package org.springframework.cloud.aws.messaging.config.xml;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -34,8 +34,7 @@ public class MessagingSchemaWithoutSchemaTest {
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Act & Assert
-		reader.loadBeanDefinitions(
-				new ClassPathResource(getClass().getSimpleName() + ".xml", getClass()));
+		reader.loadBeanDefinitions(new ClassPathResource(getClass().getSimpleName() + ".xml", getClass()));
 	}
 
 }

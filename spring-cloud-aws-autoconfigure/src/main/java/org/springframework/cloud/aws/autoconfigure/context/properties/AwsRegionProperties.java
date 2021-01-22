@@ -16,6 +16,9 @@
 
 package org.springframework.cloud.aws.autoconfigure.context.properties;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.StringUtils;
+
 /**
  * Properties related to AWS region configuration.
  *
@@ -24,18 +27,13 @@ package org.springframework.cloud.aws.autoconfigure.context.properties;
  * @since 2.0.2
  * @see org.springframework.cloud.aws.autoconfigure.context.ContextRegionProviderAutoConfiguration
  */
+@ConfigurationProperties(prefix = AwsRegionProperties.PREFIX)
 public class AwsRegionProperties {
 
 	/**
-	 * Enables automatic region detection based on the EC2 meta data service.
+	 * The prefix used for AWS region related properties.
 	 */
-	private boolean auto = true;
-
-	/**
-	 * Whether default AWS SDK region provider chain should be used when auto is set to
-	 * true.
-	 */
-	private boolean useDefaultAwsRegionChain;
+	public static final String PREFIX = "cloud.aws.region";
 
 	/**
 	 * Configures a static region for the application. Possible regions are (currently)
@@ -45,16 +43,12 @@ public class AwsRegionProperties {
 	 */
 	private String staticRegion;
 
-	public boolean isAuto() {
-		return this.auto;
-	}
-
-	public void setAuto(boolean auto) {
-		this.auto = auto;
-	}
-
 	public String getStatic() {
 		return this.staticRegion;
+	}
+
+	public boolean isStatic() {
+		return StringUtils.hasText(this.staticRegion);
 	}
 
 	public void setStatic(String staticRegion) {
@@ -65,14 +59,6 @@ public class AwsRegionProperties {
 		// creating a bean definition. Leaving for now.
 		// - tgianos 11/26/2018
 		this.staticRegion = staticRegion;
-	}
-
-	public boolean isUseDefaultAwsRegionChain() {
-		return useDefaultAwsRegionChain;
-	}
-
-	public void setUseDefaultAwsRegionChain(boolean useDefaultAwsRegionChain) {
-		this.useDefaultAwsRegionChain = useDefaultAwsRegionChain;
 	}
 
 }

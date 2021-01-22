@@ -18,7 +18,7 @@ package org.springframework.cloud.aws.autoconfigure.metrics;
 
 import java.util.Properties;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -30,21 +30,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Bernardo Martins
  */
-public class CloudWatchPropertiesTest {
+class CloudWatchPropertiesTest {
 
 	@Test
-	public void properties_notSet_shouldHaveDefaultValues() {
+	void properties_notSet_shouldHaveDefaultValues() {
 		AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(
 				CloudWatchPropertiesConfiguration.class);
 
-		CloudWatchProperties cloudWatchProperties = applicationContext
-				.getBean(CloudWatchProperties.class);
+		CloudWatchProperties cloudWatchProperties = applicationContext.getBean(CloudWatchProperties.class);
 		assertThat(cloudWatchProperties.getNamespace()).isEqualTo("");
 		assertThat(cloudWatchProperties.getBatchSize()).isEqualTo(20);
 	}
 
 	@Test
-	public void properties_set_shouldOverrideValues() {
+	void properties_set_shouldOverrideValues() {
 		Properties properties = new Properties();
 		properties.setProperty("management.metrics.export.cloudwatch.namespace", "test");
 		properties.setProperty("management.metrics.export.cloudwatch.batch-size", "5");
@@ -55,8 +54,7 @@ public class CloudWatchPropertiesTest {
 		applicationContext.register(CloudWatchPropertiesConfiguration.class);
 		applicationContext.refresh();
 
-		CloudWatchProperties cloudWatchProperties = applicationContext
-				.getBean(CloudWatchProperties.class);
+		CloudWatchProperties cloudWatchProperties = applicationContext.getBean(CloudWatchProperties.class);
 		assertThat(cloudWatchProperties.getNamespace()).isEqualTo("test");
 		assertThat(cloudWatchProperties.getBatchSize()).isEqualTo(5);
 	}

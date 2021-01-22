@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2019 the original author or authors.
+ * Copyright 2013-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.springframework.cloud.aws.secretsmanager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import org.apache.commons.logging.Log;
@@ -30,7 +31,6 @@ import org.springframework.core.env.CompositePropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * Builds a {@link CompositePropertySource} with various
@@ -38,27 +38,39 @@ import org.springframework.util.ReflectionUtils;
  * name and default context permutations. Mostly copied from Spring Cloud Consul's config
  * support.
  *
+ * Note: this class is used only by legacy Spring Cloud Bootstrap phase based config
+ * loading.
+ *
  * @author Fabio Maia
+ * @author Matej Nedic
+ * @author Eddú Meléndez
  * @since 2.0.0
  */
 public class AwsSecretsManagerPropertySourceLocator implements PropertySourceLocator {
 
-	private AWSSecretsManager smClient;
+	private final String propertySourceName;
 
-	private AwsSecretsManagerProperties properties;
+	private final AWSSecretsManager smClient;
 
-	private List<String> contexts = new ArrayList<>();
+	private final AwsSecretsManagerProperties properties;
+
+	private final Set<String> contexts = new LinkedHashSet<>();
 
 	private Log logger = LogFactory.getLog(getClass());
 
-	public AwsSecretsManagerPropertySourceLocator(AWSSecretsManager smClient,
+	public AwsSecretsManagerPropertySourceLocator(String propertySourceName, AWSSecretsManager smClient,
 			AwsSecretsManagerProperties properties) {
+		this.propertySourceName = propertySourceName;
 		this.smClient = smClient;
 		this.properties = properties;
 	}
 
+	public AwsSecretsManagerPropertySourceLocator(AWSSecretsManager smClient, AwsSecretsManagerProperties properties) {
+		this("aws-secrets-manager", smClient, properties);
+	}
+
 	public List<String> getContexts() {
-		return contexts;
+		return new ArrayList<>(contexts);
 	}
 
 	@Override
@@ -69,62 +81,22 @@ public class AwsSecretsManagerPropertySourceLocator implements PropertySourceLoc
 
 		ConfigurableEnvironment env = (ConfigurableEnvironment) environment;
 
-		String appName = properties.getName();
-
-		if (appName == null) {
-			appName = env.getProperty("spring.application.name");
-		}
+		AwsSecretsManagerPropertySources sources = new AwsSecretsManagerPropertySources(properties, logger);
 
 		List<String> profiles = Arrays.asList(env.getActiveProfiles());
+		this.contexts.addAll(sources.getAutomaticContexts(profiles));
 
-		String prefix = this.properties.getPrefix();
-
-		String defaultContext = prefix + "/" + this.properties.getDefaultContext();
-		this.contexts.add(defaultContext);
-		addProfiles(this.contexts, defaultContext, profiles);
-
-		String baseContext = prefix + "/" + appName;
-		this.contexts.add(baseContext);
-		addProfiles(this.contexts, baseContext, profiles);
-
-		Collections.reverse(this.contexts);
-
-		CompositePropertySource composite = new CompositePropertySource(
-				"aws-secrets-manager");
+		CompositePropertySource composite = new CompositePropertySource(this.propertySourceName);
 
 		for (String propertySourceContext : this.contexts) {
-			try {
-				composite.addPropertySource(create(propertySourceContext));
-			}
-			catch (Exception e) {
-				if (this.properties.isFailFast()) {
-					logger.error(
-							"Fail fast is set and there was an error reading configuration from AWS Secrets Manager:\n"
-									+ e.getMessage());
-					ReflectionUtils.rethrowRuntimeException(e);
-				}
-				else {
-					logger.warn("Unable to load AWS secret from " + propertySourceContext,
-							e);
-				}
+			PropertySource<AWSSecretsManager> propertySource = sources.createPropertySource(propertySourceContext,
+					!this.properties.isFailFast(), this.smClient);
+			if (propertySource != null) {
+				composite.addPropertySource(propertySource);
 			}
 		}
 
 		return composite;
-	}
-
-	private AwsSecretsManagerPropertySource create(String context) {
-		AwsSecretsManagerPropertySource propertySource = new AwsSecretsManagerPropertySource(
-				context, this.smClient);
-		propertySource.init();
-		return propertySource;
-	}
-
-	private void addProfiles(List<String> contexts, String baseContext,
-			List<String> profiles) {
-		for (String profile : profiles) {
-			contexts.add(baseContext + this.properties.getProfileSeparator() + profile);
-		}
 	}
 
 }

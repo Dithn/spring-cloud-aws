@@ -33,8 +33,8 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
 /**
  * @author Agim Emruli
  */
-class ContextInstanceDataPropertySourceBeanDefinitionParser
-		extends AbstractBeanDefinitionParser {
+@Deprecated
+class ContextInstanceDataPropertySourceBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	// @checkstyle:off
 	private static final String USER_TAGS_BEAN_CLASS_NAME = "org.springframework.cloud.aws.core.env.ec2.AmazonEc2InstanceUserTagsFactoryBean";
@@ -44,31 +44,26 @@ class ContextInstanceDataPropertySourceBeanDefinitionParser
 	private static final String EC2_CLIENT_CLASS_NAME = "com.amazonaws.services.ec2.AmazonEC2Client";
 
 	@Override
-	protected AbstractBeanDefinition parseInternal(Element element,
-			ParserContext parserContext) {
+	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
 
 		if (StringUtils.hasText(element.getAttribute("user-tags-map"))) {
 			BeanDefinitionBuilder userTagsBuilder = BeanDefinitionBuilder
 					.genericBeanDefinition(USER_TAGS_BEAN_CLASS_NAME);
 
-			userTagsBuilder.addConstructorArgReference(
-					getCustomClientOrDefaultClientBeanName(element, parserContext,
-							"amazon-ec2", EC2_CLIENT_CLASS_NAME));
+			userTagsBuilder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(element, parserContext,
+					"amazon-ec2", EC2_CLIENT_CLASS_NAME));
 
 			if (StringUtils.hasText(element.getAttribute("instance-id-provider"))) {
-				userTagsBuilder.addConstructorArgReference(
-						element.getAttribute("instance-id-provider"));
+				userTagsBuilder.addConstructorArgReference(element.getAttribute("instance-id-provider"));
 			}
-			BeanDefinitionReaderUtils.registerBeanDefinition(
-					new BeanDefinitionHolder(userTagsBuilder.getBeanDefinition(),
-							element.getAttribute("user-tags-map")),
-					parserContext.getRegistry());
+			BeanDefinitionReaderUtils
+					.registerBeanDefinition(new BeanDefinitionHolder(userTagsBuilder.getBeanDefinition(),
+							element.getAttribute("user-tags-map")), parserContext.getRegistry());
 		}
 
 		if (isRunningOnCloudEnvironment()) {
-			ContextConfigurationUtils.registerInstanceDataPropertySource(
-					parserContext.getRegistry(), element.getAttribute("value-separator"),
-					element.getAttribute("attribute-separator"));
+			ContextConfigurationUtils.registerInstanceDataPropertySource(parserContext.getRegistry(),
+					element.getAttribute("value-separator"), element.getAttribute("attribute-separator"));
 		}
 
 		return null;

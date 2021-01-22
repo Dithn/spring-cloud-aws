@@ -41,6 +41,7 @@ import static org.springframework.cloud.aws.core.config.AmazonWebserviceClientCo
  * @author Agim Emruli
  * @since 1.0
  */
+@Deprecated
 class ContextCredentialsBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	// @checkstyle:off
@@ -62,8 +63,8 @@ class ContextCredentialsBeanDefinitionParser extends AbstractSingleBeanDefinitio
 
 	private static final String SECRET_KEY_ATTRIBUTE_NAME = "secret-key";
 
-	private static BeanDefinition getCredentialsProvider(
-			String credentialsProviderClassName, Object... constructorArg) {
+	private static BeanDefinition getCredentialsProvider(String credentialsProviderClassName,
+			Object... constructorArg) {
 		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(credentialsProviderClassName);
 		for (Object o : constructorArg) {
@@ -84,14 +85,13 @@ class ContextCredentialsBeanDefinitionParser extends AbstractSingleBeanDefinitio
 	 * @return - the bean definition with an
 	 * {@link com.amazonaws.auth.BasicAWSCredentials} class
 	 */
-	private static BeanDefinition getCredentials(Element credentialsProviderElement,
-			ParserContext parserContext) {
+	private static BeanDefinition getCredentials(Element credentialsProviderElement, ParserContext parserContext) {
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder
 				.rootBeanDefinition("com.amazonaws.auth.BasicAWSCredentials");
-		builder.addConstructorArgValue(getAttributeValue(ACCESS_KEY_ATTRIBUTE_NAME,
-				credentialsProviderElement, parserContext));
-		builder.addConstructorArgValue(getAttributeValue(SECRET_KEY_ATTRIBUTE_NAME,
-				credentialsProviderElement, parserContext));
+		builder.addConstructorArgValue(
+				getAttributeValue(ACCESS_KEY_ATTRIBUTE_NAME, credentialsProviderElement, parserContext));
+		builder.addConstructorArgValue(
+				getAttributeValue(SECRET_KEY_ATTRIBUTE_NAME, credentialsProviderElement, parserContext));
 		return builder.getBeanDefinition();
 	}
 
@@ -117,19 +117,17 @@ class ContextCredentialsBeanDefinitionParser extends AbstractSingleBeanDefinitio
 	 * @param parserContext - The parser context used to report errors
 	 * @return - The attribute value
 	 */
-	private static String getAttributeValue(String attribute, Element element,
-			ParserContext parserContext) {
+	private static String getAttributeValue(String attribute, Element element, ParserContext parserContext) {
 		String attributeValue = element.getAttribute(attribute);
 		if (!StringUtils.hasText(attributeValue)) {
-			parserContext.getReaderContext().error(
-					"The '" + attribute + "' attribute must not be empty", element);
+			parserContext.getReaderContext().error("The '" + attribute + "' attribute must not be empty", element);
 		}
 		return attributeValue;
 	}
 
 	@Override
-	protected String resolveId(Element element, AbstractBeanDefinition definition,
-			ParserContext parserContext) throws BeanDefinitionStoreException {
+	protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext)
+			throws BeanDefinitionStoreException {
 		return CredentialsProviderFactoryBean.CREDENTIALS_PROVIDER_BEAN_NAME;
 	}
 
@@ -139,36 +137,28 @@ class ContextCredentialsBeanDefinitionParser extends AbstractSingleBeanDefinitio
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
-		if (parserContext.getRegistry().containsBeanDefinition(
-				CredentialsProviderFactoryBean.CREDENTIALS_PROVIDER_BEAN_NAME)) {
-			parserContext.getReaderContext()
-					.error("Multiple <context-credentials/> detected. "
-							+ "The <context-credentials/> is only allowed once per application context",
-							element);
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+		if (parserContext.getRegistry()
+				.containsBeanDefinition(CredentialsProviderFactoryBean.CREDENTIALS_PROVIDER_BEAN_NAME)) {
+			parserContext.getReaderContext().error("Multiple <context-credentials/> detected. "
+					+ "The <context-credentials/> is only allowed once per application context", element);
 		}
 
 		List<Element> elements = DomUtils.getChildElements(element);
-		ManagedList<BeanDefinition> credentialsProviders = new ManagedList<>(
-				elements.size());
+		ManagedList<BeanDefinition> credentialsProviders = new ManagedList<>(elements.size());
 
 		for (Element credentialsProviderElement : elements) {
 			if ("simple-credentials".equals(credentialsProviderElement.getLocalName())) {
-				credentialsProviders.add(getCredentialsProvider(
-						STATIC_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME,
+				credentialsProviders.add(getCredentialsProvider(STATIC_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME,
 						getCredentials(credentialsProviderElement, parserContext)));
 			}
 
-			if ("instance-profile-credentials"
-					.equals(credentialsProviderElement.getLocalName())) {
-				credentialsProviders.add(getCredentialsProvider(
-						INSTANCE_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME));
+			if ("instance-profile-credentials".equals(credentialsProviderElement.getLocalName())) {
+				credentialsProviders.add(getCredentialsProvider(INSTANCE_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME));
 			}
 
 			if ("profile-credentials".equals(credentialsProviderElement.getLocalName())) {
-				credentialsProviders.add(getCredentialsProvider(
-						PROFILE_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME,
+				credentialsProviders.add(getCredentialsProvider(PROFILE_CREDENTIALS_PROVIDER_BEAN_CLASS_NAME,
 						getProfileConfiguration(credentialsProviderElement).toArray()));
 			}
 		}

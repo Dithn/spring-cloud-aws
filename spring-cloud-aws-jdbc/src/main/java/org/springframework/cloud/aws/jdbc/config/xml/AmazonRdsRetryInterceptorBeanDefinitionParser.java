@@ -41,8 +41,8 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
  * @author Agim Emruli
  * @since 1.0
  */
-class AmazonRdsRetryInterceptorBeanDefinitionParser
-		extends AbstractSingleBeanDefinitionParser {
+@Deprecated
+class AmazonRdsRetryInterceptorBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	/**
 	 * Class name for the RetryTemplate. String because retry support is optional.
@@ -77,27 +77,21 @@ class AmazonRdsRetryInterceptorBeanDefinitionParser
 	 * {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
 	 * @return Configured but non registered bean definition
 	 */
-	private static BeanDefinition buildRetryOperationDefinition(Element element,
-			ParserContext parserContext) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.rootBeanDefinition(RETRY_OPERATIONS_CLASS_NAME);
-		builder.addPropertyValue("retryPolicy",
-				buildRetryPolicyDefinition(element, parserContext));
+	private static BeanDefinition buildRetryOperationDefinition(Element element, ParserContext parserContext) {
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(RETRY_OPERATIONS_CLASS_NAME);
+		builder.addPropertyValue("retryPolicy", buildRetryPolicyDefinition(element, parserContext));
 
 		if (StringUtils.hasText(element.getAttribute(BACK_OFF_POLICY))) {
 			String backOffPolicyBeanName = element.getAttribute(BACK_OFF_POLICY);
-			builder.addPropertyReference(
-					Conventions.attributeNameToPropertyName(BACK_OFF_POLICY),
+			builder.addPropertyReference(Conventions.attributeNameToPropertyName(BACK_OFF_POLICY),
 					backOffPolicyBeanName);
 		}
 
 		return builder.getBeanDefinition();
 	}
 
-	private static BeanDefinition buildRetryPolicyDefinition(Element element,
-			ParserContext parserContext) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.rootBeanDefinition(COMPOSITE_RETRY_POLICY_CLASS_NAME);
+	private static BeanDefinition buildRetryPolicyDefinition(Element element, ParserContext parserContext) {
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(COMPOSITE_RETRY_POLICY_CLASS_NAME);
 
 		ManagedList<BeanDefinition> policies = new ManagedList<>(2);
 		policies.add(buildDatabaseInstancePolicy(element, parserContext));
@@ -108,32 +102,28 @@ class AmazonRdsRetryInterceptorBeanDefinitionParser
 		return builder.getBeanDefinition();
 	}
 
-	private static BeanDefinition buildDatabaseInstancePolicy(Element element,
-			ParserContext parserContext) {
+	private static BeanDefinition buildDatabaseInstancePolicy(Element element, ParserContext parserContext) {
 		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(DatabaseInstanceStatusRetryPolicy.class);
 
-		String amazonRdsClientBeanName = getCustomClientOrDefaultClientBeanName(element,
-				parserContext, "amazon-rds", AMAZON_RDS_CLIENT_CLASS_NAME);
+		String amazonRdsClientBeanName = getCustomClientOrDefaultClientBeanName(element, parserContext, "amazon-rds",
+				AMAZON_RDS_CLIENT_CLASS_NAME);
 
 		beanDefinitionBuilder.addConstructorArgReference(amazonRdsClientBeanName);
-		beanDefinitionBuilder.addConstructorArgValue(element.getAttribute(
-				AmazonRdsDataSourceBeanDefinitionParser.DB_INSTANCE_IDENTIFIER));
+		beanDefinitionBuilder.addConstructorArgValue(
+				element.getAttribute(AmazonRdsDataSourceBeanDefinitionParser.DB_INSTANCE_IDENTIFIER));
 
 		String resourceIdResolverBeanName = GlobalBeanDefinitionUtils
 				.retrieveResourceIdResolverBeanName(parserContext.getRegistry());
-		beanDefinitionBuilder.addPropertyReference("resourceIdResolver",
-				resourceIdResolverBeanName);
+		beanDefinitionBuilder.addPropertyReference("resourceIdResolver", resourceIdResolverBeanName);
 
 		return beanDefinitionBuilder.getBeanDefinition();
 	}
 
 	private static BeanDefinition buildSQLRetryPolicy(Element element) {
-		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
-				.rootBeanDefinition(SqlRetryPolicy.class);
+		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(SqlRetryPolicy.class);
 		if (StringUtils.hasText(element.getAttribute(MAX_NUMBER_OF_RETRIES))) {
-			beanDefinitionBuilder.addPropertyValue(
-					Conventions.attributeNameToPropertyName(MAX_NUMBER_OF_RETRIES),
+			beanDefinitionBuilder.addPropertyValue(Conventions.attributeNameToPropertyName(MAX_NUMBER_OF_RETRIES),
 					element.getAttribute(MAX_NUMBER_OF_RETRIES));
 		}
 		return beanDefinitionBuilder.getBeanDefinition();
@@ -145,10 +135,8 @@ class AmazonRdsRetryInterceptorBeanDefinitionParser
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
-		builder.addPropertyValue("retryOperations",
-				buildRetryOperationDefinition(element, parserContext));
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
+		builder.addPropertyValue("retryOperations", buildRetryOperationDefinition(element, parserContext));
 	}
 
 }

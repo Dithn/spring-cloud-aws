@@ -21,7 +21,7 @@ import java.util.List;
 import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClient;
 import org.aopalliance.intercept.MethodInterceptor;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
@@ -37,15 +37,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AmazonRdsRetryInterceptorBeanDefinitionParserTest {
 
 	@Test
-	public void parseInternal_minimalConfiguration_createsRetryInterceptor()
-			throws Exception {
+	public void parseInternal_minimalConfiguration_createsRetryInterceptor() throws Exception {
 		// Arrange
 		ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext(
 				getClass().getSimpleName() + "-minimal.xml", getClass());
 
 		// Act
-		MethodInterceptor interceptor = classPathXmlApplicationContext
-				.getBean(MethodInterceptor.class);
+		MethodInterceptor interceptor = classPathXmlApplicationContext.getBean(MethodInterceptor.class);
 
 		// Assert
 		assertThat(interceptor).isNotNull();
@@ -82,8 +80,7 @@ public class AmazonRdsRetryInterceptorBeanDefinitionParserTest {
 	}
 
 	@Test
-	public void parseInternal_customRDsClientConfigured_createInterceptorWithCustomRdsClient()
-			throws Exception {
+	public void parseInternal_customRDsClientConfigured_createInterceptorWithCustomRdsClient() throws Exception {
 		// Arrange
 		ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext(
 				getClass().getSimpleName() + "-customRdsClient.xml", getClass());
@@ -93,13 +90,12 @@ public class AmazonRdsRetryInterceptorBeanDefinitionParserTest {
 
 		// Assert
 		assertThat(classPathXmlApplicationContext
-				.containsBean(AmazonWebserviceClientConfigurationUtils
-						.getBeanName(AmazonRDSClient.class.getName()))).isFalse();
+				.containsBean(AmazonWebserviceClientConfigurationUtils.getBeanName(AmazonRDSClient.class.getName())))
+						.isFalse();
 	}
 
 	@Test
-	public void parseInternal_customBackOffPolicy_createInterceptorWithCustomBackOffPolicy()
-			throws Exception {
+	public void parseInternal_customBackOffPolicy_createInterceptorWithCustomBackOffPolicy() throws Exception {
 		// Arrange
 		ClassPathXmlApplicationContext classPathXmlApplicationContext = new ClassPathXmlApplicationContext(
 				getClass().getSimpleName() + "-customBackOffPolicy.xml", getClass());
@@ -107,13 +103,12 @@ public class AmazonRdsRetryInterceptorBeanDefinitionParserTest {
 				.getBeanDefinition("interceptor");
 
 		// Act
-		BeanDefinition retryOperations = (BeanDefinition) beanDefinition
-				.getPropertyValues().getPropertyValue("retryOperations").getValue();
+		BeanDefinition retryOperations = (BeanDefinition) beanDefinition.getPropertyValues()
+				.getPropertyValue("retryOperations").getValue();
 
 		// Assert
-		assertThat(((RuntimeBeanReference) retryOperations.getPropertyValues()
-				.getPropertyValue("backOffPolicy").getValue()).getBeanName())
-						.isEqualTo("policy");
+		assertThat(((RuntimeBeanReference) retryOperations.getPropertyValues().getPropertyValue("backOffPolicy")
+				.getValue()).getBeanName()).isEqualTo("policy");
 	}
 
 	@Test
@@ -128,16 +123,16 @@ public class AmazonRdsRetryInterceptorBeanDefinitionParserTest {
 				.getBeanDefinition("interceptor");
 
 		// Assert
-		BeanDefinition retryOperations = (BeanDefinition) beanDefinition
-				.getPropertyValues().getPropertyValue("retryOperations").getValue();
-		BeanDefinition compositeRetryPolicy = (BeanDefinition) retryOperations
-				.getPropertyValues().getPropertyValue("retryPolicy").getValue();
+		BeanDefinition retryOperations = (BeanDefinition) beanDefinition.getPropertyValues()
+				.getPropertyValue("retryOperations").getValue();
+		BeanDefinition compositeRetryPolicy = (BeanDefinition) retryOperations.getPropertyValues()
+				.getPropertyValue("retryPolicy").getValue();
 		@SuppressWarnings("unchecked")
-		List<BeanDefinition> policies = (List<BeanDefinition>) compositeRetryPolicy
-				.getPropertyValues().getPropertyValue("policies").getValue();
+		List<BeanDefinition> policies = (List<BeanDefinition>) compositeRetryPolicy.getPropertyValues()
+				.getPropertyValue("policies").getValue();
 		BeanDefinition sqlPolicy = policies.get(1);
-		assertThat(sqlPolicy.getPropertyValues().getPropertyValue("maxNumberOfRetries")
-				.getValue().toString()).isEqualTo("4");
+		assertThat(sqlPolicy.getPropertyValues().getPropertyValue("maxNumberOfRetries").getValue().toString())
+				.isEqualTo("4");
 	}
 
 }

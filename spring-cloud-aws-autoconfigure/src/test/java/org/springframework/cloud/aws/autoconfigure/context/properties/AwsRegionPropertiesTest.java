@@ -17,8 +17,8 @@
 package org.springframework.cloud.aws.autoconfigure.context.properties;
 
 import com.amazonaws.regions.Regions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,33 +28,21 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Tom Gianos
  * @since 2.0.2
  */
-public class AwsRegionPropertiesTest {
+class AwsRegionPropertiesTest {
 
 	private AwsRegionProperties properties;
 
-	@Before
-	public void setup() {
+	@BeforeEach
+	void setup() {
 		this.properties = new AwsRegionProperties();
 	}
 
 	@Test
-	public void autoCanBeSet() {
-		assertThat(this.properties.isAuto()).as("Default value of auto should be true")
-				.isTrue();
-
-		this.properties.setAuto(false);
-		assertThat(this.properties.isAuto())
-				.as("Auto should have been reassigned as false").isFalse();
-	}
-
-	@Test
-	public void staticRegionCanBeSet() {
-		assertThat(this.properties.getStatic())
-				.as("Static region value should have default of null").isNull();
+	void staticRegionCanBeSet() {
+		assertThat(this.properties.getStatic()).as("Static region value should have default of null").isNull();
 
 		this.properties.setStatic(Regions.US_EAST_1.getName());
-		assertThat(this.properties.getStatic())
-				.as("Static region should have been assigned to us-east-1")
+		assertThat(this.properties.getStatic()).as("Static region should have been assigned to us-east-1")
 				.isEqualTo(Regions.US_EAST_1.getName());
 	}
 

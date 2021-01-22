@@ -32,30 +32,27 @@ import static org.springframework.cloud.aws.core.config.AmazonWebserviceClientCo
  *
  * @author Agim Emruli
  */
+@Deprecated
 public class ContextRegionBeanDefinitionParser extends AbstractBeanDefinitionParser {
 
 	static final String CONTEXT_REGION_PROVIDER_BEAN_NAME = "regionProvider";
 
 	private static boolean isAutoDetect(Element element) {
-		return StringUtils.hasText(element.getAttribute("auto-detect")) && Boolean.TRUE
-				.toString().equalsIgnoreCase(element.getAttribute("auto-detect"));
+		return StringUtils.hasText(element.getAttribute("auto-detect"))
+				&& Boolean.TRUE.toString().equalsIgnoreCase(element.getAttribute("auto-detect"));
 	}
 
 	@Override
-	protected String resolveId(Element element, AbstractBeanDefinition definition,
-			ParserContext parserContext) throws BeanDefinitionStoreException {
+	protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext)
+			throws BeanDefinitionStoreException {
 		return CONTEXT_REGION_PROVIDER_BEAN_NAME;
 	}
 
 	@Override
-	protected AbstractBeanDefinition parseInternal(Element element,
-			ParserContext parserContext) {
-		if (parserContext.getRegistry()
-				.containsBeanDefinition(CONTEXT_REGION_PROVIDER_BEAN_NAME)) {
-			parserContext.getReaderContext()
-					.error("Multiple <context-region/> elements detected. "
-							+ "The <context-region/> element is only allowed once per application context",
-							element);
+	protected AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+		if (parserContext.getRegistry().containsBeanDefinition(CONTEXT_REGION_PROVIDER_BEAN_NAME)) {
+			parserContext.getReaderContext().error("Multiple <context-region/> elements detected. "
+					+ "The <context-region/> element is only allowed once per application context", element);
 		}
 
 		if (isAutoDetect(element) && (StringUtils.hasText(element.getAttribute("region"))
@@ -69,30 +66,27 @@ public class ContextRegionBeanDefinitionParser extends AbstractBeanDefinitionPar
 		if (!isAutoDetect(element) && !StringUtils.hasText(element.getAttribute("region"))
 				&& !StringUtils.hasText(element.getAttribute("region-provider"))) {
 			parserContext.getReaderContext().error(
-					"Either auto-detect must be enabled, or a region or region-provider must be specified",
-					element);
+					"Either auto-detect must be enabled, or a region or region-provider must be specified", element);
 			return null;
 		}
 
 		// Replace the default region provider with this one
-		replaceDefaultRegionProvider(parserContext.getRegistry(),
-				CONTEXT_REGION_PROVIDER_BEAN_NAME);
+		replaceDefaultRegionProvider(parserContext.getRegistry(), CONTEXT_REGION_PROVIDER_BEAN_NAME);
 
 		if (StringUtils.hasText(element.getAttribute("region-provider"))) {
-			parserContext.getRegistry().registerAlias(
-					element.getAttribute("region-provider"),
+			parserContext.getRegistry().registerAlias(element.getAttribute("region-provider"),
 					CONTEXT_REGION_PROVIDER_BEAN_NAME);
 			return null;
 		}
 		else if (StringUtils.hasText(element.getAttribute("region"))) {
-			BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(
-					"org.springframework.cloud.aws.core.region.StaticRegionProvider");
+			BeanDefinitionBuilder builder = BeanDefinitionBuilder
+					.genericBeanDefinition("org.springframework.cloud.aws.core.region.StaticRegionProvider");
 			builder.addConstructorArgValue(element.getAttribute("region"));
 			return builder.getBeanDefinition();
 		}
 		else if (isAutoDetect(element)) {
-			BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(
-					"org.springframework.cloud.aws.core.region.Ec2MetadataRegionProvider");
+			BeanDefinitionBuilder builder = BeanDefinitionBuilder
+					.genericBeanDefinition("org.springframework.cloud.aws.core.region.Ec2MetadataRegionProvider");
 			return builder.getBeanDefinition();
 		}
 		return null;

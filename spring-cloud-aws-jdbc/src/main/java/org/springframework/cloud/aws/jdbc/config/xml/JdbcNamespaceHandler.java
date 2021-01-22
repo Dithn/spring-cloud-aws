@@ -27,14 +27,13 @@ import org.springframework.cloud.aws.core.support.documentation.RuntimeUse;
  * @since 1.0
  */
 @RuntimeUse
+@Deprecated
 public class JdbcNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
-		registerBeanDefinitionParser("data-source",
-				new AmazonRdsDataSourceBeanDefinitionParser());
-		registerBeanDefinitionParser("retry-interceptor",
-				new AmazonRdsRetryInterceptorBeanDefinitionParser());
+		registerBeanDefinitionParser("data-source", new AmazonRdsDataSourceBeanDefinitionParser());
+		registerBeanDefinitionParser("retry-interceptor", new AmazonRdsRetryInterceptorBeanDefinitionParser());
 	}
 
 }

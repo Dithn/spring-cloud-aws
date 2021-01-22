@@ -23,6 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -74,24 +76,26 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 
 	private final String versionId;
 
+	private final String contentType;
+
 	private final AmazonS3 amazonS3;
 
 	private final TaskExecutor taskExecutor;
 
 	private volatile ObjectMetadata objectMetadata;
 
-	public SimpleStorageResource(AmazonS3 amazonS3, String bucketName, String objectName,
-			TaskExecutor taskExecutor) {
-		this(amazonS3, bucketName, objectName, taskExecutor, null);
+	public SimpleStorageResource(AmazonS3 amazonS3, String bucketName, String objectName, TaskExecutor taskExecutor) {
+		this(amazonS3, bucketName, objectName, taskExecutor, null, null);
 	}
 
-	public SimpleStorageResource(AmazonS3 amazonS3, String bucketName, String objectName,
-			TaskExecutor taskExecutor, String versionId) {
+	public SimpleStorageResource(AmazonS3 amazonS3, String bucketName, String objectName, TaskExecutor taskExecutor,
+			String versionId, String contentType) {
 		this.amazonS3 = AmazonS3ProxyFactory.createProxy(amazonS3);
 		this.bucketName = bucketName;
 		this.objectName = objectName;
 		this.taskExecutor = taskExecutor;
 		this.versionId = versionId;
+		this.contentType = contentType;
 	}
 
 	@Override
@@ -110,8 +114,7 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		GetObjectRequest getObjectRequest = new GetObjectRequest(this.bucketName,
-				this.objectName);
+		GetObjectRequest getObjectRequest = new GetObjectRequest(this.bucketName, this.objectName);
 		if (this.versionId != null) {
 			getObjectRequest.setVersionId(this.versionId);
 		}
@@ -141,25 +144,31 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 	@Override
 	public URL getURL() throws IOException {
 		Region region = this.amazonS3.getRegion().toAWSRegion();
-		String encodedObjectName = URLEncoder.encode(this.objectName,
-				StandardCharsets.UTF_8.toString());
+		String encodedObjectName = URLEncoder.encode(this.objectName, StandardCharsets.UTF_8.toString());
 		return new URL("https", region.getServiceEndpoint(AmazonS3Client.S3_SERVICE_NAME),
 				"/" + this.bucketName + "/" + encodedObjectName);
 	}
 
+	public URI getS3Uri() {
+		try {
+			return new URI("s3", "//" + this.bucketName + "/" + this.objectName, null);
+		}
+		catch (URISyntaxException e) {
+			throw new RuntimeException("Failed to resolve s3:// uri", e);
+		}
+	}
+
 	@Override
 	public File getFile() throws IOException {
-		throw new UnsupportedOperationException(
-				"Amazon S3 resource can not be resolved to java.io.File objects.Use "
-						+ "getInputStream() to retrieve the contents of the object!");
+		throw new UnsupportedOperationException("Amazon S3 resource can not be resolved to java.io.File objects.Use "
+				+ "getInputStream() to retrieve the contents of the object!");
 	}
 
 	private ObjectMetadata getRequiredObjectMetadata() throws FileNotFoundException {
 		ObjectMetadata metadata = getObjectMetadata();
 		if (metadata == null) {
-			StringBuilder builder = new StringBuilder().append("Resource with bucket='")
-					.append(this.bucketName).append("' and objectName='")
-					.append(this.objectName);
+			StringBuilder builder = new StringBuilder().append("Resource with bucket='").append(this.bucketName)
+					.append("' and objectName='").append(this.objectName);
 			if (this.versionId != null) {
 				builder.append("' and versionId='");
 				builder.append(this.versionId);
@@ -184,15 +193,18 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 	@Override
 	public SimpleStorageResource createRelative(String relativePath) throws IOException {
 		String relativeKey = this.objectName + "/" + relativePath;
-		return new SimpleStorageResource(this.amazonS3, this.bucketName, relativeKey,
-				this.taskExecutor);
+		return new SimpleStorageResource(this.amazonS3, this.bucketName, relativeKey, this.taskExecutor);
+	}
+
+	public AmazonS3 getAmazonS3() {
+		return amazonS3;
 	}
 
 	private ObjectMetadata getObjectMetadata() {
 		if (this.objectMetadata == null) {
 			try {
-				GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(
-						this.bucketName, this.objectName);
+				GetObjectMetadataRequest metadataRequest = new GetObjectMetadataRequest(this.bucketName,
+						this.objectName);
 				if (this.versionId != null) {
 					metadataRequest.setVersionId(this.versionId);
 				}
@@ -222,8 +234,7 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 		private final CompletionService<UploadPartResult> completionService;
 
 		@SuppressWarnings("FieldMayBeFinal")
-		private ByteArrayOutputStream currentOutputStream = new ByteArrayOutputStream(
-				BUFFER_SIZE);
+		private ByteArrayOutputStream currentOutputStream = new ByteArrayOutputStream(BUFFER_SIZE);
 
 		private int partNumberCounter = 1;
 
@@ -239,14 +250,10 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 			synchronized (this.monitor) {
 				if (this.currentOutputStream.size() == BUFFER_SIZE) {
 					initiateMultiPartIfNeeded();
-					this.completionService.submit(new UploadPartResultCallable(
-							SimpleStorageResource.this.amazonS3,
-							this.currentOutputStream.toByteArray(),
-							this.currentOutputStream.size(),
-							SimpleStorageResource.this.bucketName,
-							SimpleStorageResource.this.objectName,
-							this.multiPartUploadResult.getUploadId(),
-							this.partNumberCounter++, false));
+					this.completionService.submit(new UploadPartResultCallable(SimpleStorageResource.this.amazonS3,
+							this.currentOutputStream.toByteArray(), this.currentOutputStream.size(),
+							SimpleStorageResource.this.bucketName, SimpleStorageResource.this.objectName,
+							this.multiPartUploadResult.getUploadId(), this.partNumberCounter++, false));
 					this.currentOutputStream.reset();
 				}
 				this.currentOutputStream.write(b);
@@ -282,38 +289,32 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 				MessageDigest messageDigest = MessageDigest.getInstance("MD5");
 				String md5Digest = BinaryUtils.toBase64(messageDigest.digest(content));
 				objectMetadata.setContentMD5(md5Digest);
+				if (SimpleStorageResource.this.contentType != null) {
+					objectMetadata.setContentType(SimpleStorageResource.this.contentType);
+				}
 			}
 			catch (NoSuchAlgorithmException e) {
 				throw new IllegalStateException(
-						"MessageDigest could not be initialized because it uses an unknown algorithm",
-						e);
+						"MessageDigest could not be initialized because it uses an unknown algorithm", e);
 			}
 
-			SimpleStorageResource.this.amazonS3.putObject(
-					SimpleStorageResource.this.bucketName,
-					SimpleStorageResource.this.objectName,
-					new ByteArrayInputStream(content), objectMetadata);
+			SimpleStorageResource.this.amazonS3.putObject(SimpleStorageResource.this.bucketName,
+					SimpleStorageResource.this.objectName, new ByteArrayInputStream(content), objectMetadata);
 
 			// Release the memory early
 			this.currentOutputStream = null;
 		}
 
 		private void finishMultiPartUpload() throws IOException {
-			this.completionService.submit(
-					new UploadPartResultCallable(SimpleStorageResource.this.amazonS3,
-							this.currentOutputStream.toByteArray(),
-							this.currentOutputStream.size(),
-							SimpleStorageResource.this.bucketName,
-							SimpleStorageResource.this.objectName,
-							this.multiPartUploadResult.getUploadId(),
-							this.partNumberCounter, true));
+			this.completionService.submit(new UploadPartResultCallable(SimpleStorageResource.this.amazonS3,
+					this.currentOutputStream.toByteArray(), this.currentOutputStream.size(),
+					SimpleStorageResource.this.bucketName, SimpleStorageResource.this.objectName,
+					this.multiPartUploadResult.getUploadId(), this.partNumberCounter, true));
 			try {
 				List<PartETag> partETags = getMultiPartsUploadResults();
-				SimpleStorageResource.this.amazonS3
-						.completeMultipartUpload(new CompleteMultipartUploadRequest(
-								this.multiPartUploadResult.getBucketName(),
-								this.multiPartUploadResult.getKey(),
-								this.multiPartUploadResult.getUploadId(), partETags));
+				SimpleStorageResource.this.amazonS3.completeMultipartUpload(new CompleteMultipartUploadRequest(
+						this.multiPartUploadResult.getBucketName(), this.multiPartUploadResult.getKey(),
+						this.multiPartUploadResult.getUploadId(), partETags));
 			}
 			catch (ExecutionException e) {
 				abortMultiPartUpload();
@@ -330,36 +331,36 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 
 		private void initiateMultiPartIfNeeded() {
 			if (this.multiPartUploadResult == null) {
-				this.multiPartUploadResult = SimpleStorageResource.this.amazonS3
-						.initiateMultipartUpload(new InitiateMultipartUploadRequest(
-								SimpleStorageResource.this.bucketName,
-								SimpleStorageResource.this.objectName));
+
+				ObjectMetadata metadata = new ObjectMetadata();
+				if (SimpleStorageResource.this.contentType != null) {
+					metadata.setContentType(SimpleStorageResource.this.contentType);
+				}
+
+				this.multiPartUploadResult = SimpleStorageResource.this.amazonS3.initiateMultipartUpload(
+						new InitiateMultipartUploadRequest(SimpleStorageResource.this.bucketName,
+								SimpleStorageResource.this.objectName, metadata));
 			}
 		}
 
 		private void abortMultiPartUpload() {
 			if (isMultiPartUpload()) {
-				SimpleStorageResource.this.amazonS3
-						.abortMultipartUpload(new AbortMultipartUploadRequest(
-								this.multiPartUploadResult.getBucketName(),
-								this.multiPartUploadResult.getKey(),
-								this.multiPartUploadResult.getUploadId()));
+				SimpleStorageResource.this.amazonS3.abortMultipartUpload(
+						new AbortMultipartUploadRequest(this.multiPartUploadResult.getBucketName(),
+								this.multiPartUploadResult.getKey(), this.multiPartUploadResult.getUploadId()));
 			}
 		}
 
-		private List<PartETag> getMultiPartsUploadResults()
-				throws ExecutionException, InterruptedException {
+		private List<PartETag> getMultiPartsUploadResults() throws ExecutionException, InterruptedException {
 			List<PartETag> result = new ArrayList<>(this.partNumberCounter);
 			for (int i = 0; i < this.partNumberCounter; i++) {
-				Future<UploadPartResult> uploadPartResultFuture = this.completionService
-						.take();
+				Future<UploadPartResult> uploadPartResultFuture = this.completionService.take();
 				result.add(uploadPartResultFuture.get().getPartETag());
 			}
 			return result;
 		}
 
-		private final class UploadPartResultCallable
-				implements Callable<UploadPartResult> {
+		private final class UploadPartResultCallable implements Callable<UploadPartResult> {
 
 			private final AmazonS3 amazonS3;
 
@@ -378,9 +379,8 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 			@SuppressWarnings("FieldMayBeFinal")
 			private byte[] content;
 
-			private UploadPartResultCallable(AmazonS3 amazon, byte[] content,
-					int writtenDataSize, String bucketName, String key, String uploadId,
-					int partNumber, boolean last) {
+			private UploadPartResultCallable(AmazonS3 amazon, byte[] content, int writtenDataSize, String bucketName,
+					String key, String uploadId, int partNumber, boolean last) {
 				this.amazonS3 = amazon;
 				this.content = content;
 				this.contentLength = writtenDataSize;
@@ -394,12 +394,10 @@ public class SimpleStorageResource extends AbstractResource implements WritableR
 			@Override
 			public UploadPartResult call() throws Exception {
 				try {
-					return this.amazonS3.uploadPart(new UploadPartRequest()
-							.withBucketName(this.bucketName).withKey(this.key)
-							.withUploadId(this.uploadId)
-							.withInputStream(new ByteArrayInputStream(this.content))
-							.withPartNumber(this.partNumber).withLastPart(this.last)
-							.withPartSize(this.contentLength));
+					return this.amazonS3.uploadPart(new UploadPartRequest().withBucketName(this.bucketName)
+							.withKey(this.key).withUploadId(this.uploadId)
+							.withInputStream(new ByteArrayInputStream(this.content)).withPartNumber(this.partNumber)
+							.withLastPart(this.last).withPartSize(this.contentLength));
 				}
 				finally {
 					// Release the memory, as the callable may still live inside the

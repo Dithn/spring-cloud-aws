@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>org.springframework.cloud</groupId>
 		<artifactId>spring-cloud-build</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.0.0-RC1</version>
 		<relativePath/><!-- lookup parent from repository -->
 	</parent>
 
@@ -48,7 +48,8 @@
 		<javax-mail.version>1.5.5</javax-mail.version>
 		<maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
 		<javax.activation.version>1.2.0</javax.activation.version>
-		<spring-cloud-commons.version>2.2.3.BUILD-SNAPSHOT</spring-cloud-commons.version>
+		<spring-cloud-commons.version>3.0.0-RC1</spring-cloud-commons.version>
+		<spring-javaformat.version>0.0.25</spring-javaformat.version>
 	</properties>
 
 	<modules>
@@ -58,14 +59,16 @@
 		<module>spring-cloud-aws-jdbc</module>
 		<module>spring-cloud-aws-messaging</module>
 		<module>spring-cloud-aws-autoconfigure</module>
-		<module>spring-cloud-aws-actuator</module>
 		<module>spring-cloud-aws-parameter-store-config</module>
 		<module>spring-cloud-aws-secrets-manager-config</module>
+		<module>spring-cloud-aws-ses</module>
 		<module>spring-cloud-starter-aws</module>
 		<module>spring-cloud-starter-aws-jdbc</module>
 		<module>spring-cloud-starter-aws-messaging</module>
 		<module>spring-cloud-starter-aws-parameter-store-config</module>
 		<module>spring-cloud-starter-aws-secrets-manager-config</module>
+		<module>spring-cloud-starter-aws-ses</module>
+		<module>spring-cloud-aws-integration-test</module>
 		<module>docs</module>
 	</modules>
 
@@ -113,6 +116,16 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.junit.vintage</groupId>
+					<artifactId>junit-vintage-engine</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
@@ -138,6 +151,7 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<configuration>
 						<argLine>-Xms512m -Xmx512m</argLine>
+						<excludedGroups>aws-integration-test</excludedGroups>
 					</configuration>
 				</plugin>
 			</plugins>
@@ -150,6 +164,15 @@
 			<plugin>
 				<groupId>io.spring.javaformat</groupId>
 				<artifactId>spring-javaformat-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<inherited>true</inherited>
+						<goals>
+							<goal>validate</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -179,17 +202,6 @@
 	</reporting>
 
 	<profiles>
-		<profile>
-			<id>integration-test</id>
-			<activation>
-				<property>
-					<name>els.config.dir</name>
-				</property>
-			</activation>
-			<modules>
-				<module>spring-cloud-aws-integration-test</module>
-			</modules>
-		</profile>
 		<profile>
 			<id>spring</id>
 			<repositories>
@@ -263,6 +275,29 @@
 				</dependency>
 			</dependencies>
 		</profile>
+		<profile>
+			<id>aws-integration-tests</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>3.0.0-M5</version>
+						<configuration combine.self="override">
+							<groups>aws-integration-test</groups>
+							<excludedGroups/>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
+
+	<distributionManagement>
+		<repository>
+			<id>bintray-awspring</id>
+			<url>https://api.bintray.com/maven/awspring/releases/spring-cloud-aws/;publish=1</url>
+		</repository>
+	</distributionManagement>
 
 </project>

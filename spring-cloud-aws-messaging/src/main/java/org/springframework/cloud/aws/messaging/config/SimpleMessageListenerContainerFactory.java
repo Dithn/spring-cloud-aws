@@ -29,6 +29,7 @@ import org.springframework.util.Assert;
 
 /**
  * @author Alain Sahli
+ * @author Mete Alpaslan Katırcıoğlu
  * @since 1.0
  */
 public class SimpleMessageListenerContainerFactory {
@@ -40,6 +41,8 @@ public class SimpleMessageListenerContainerFactory {
 	private Integer visibilityTimeout;
 
 	private Integer waitTimeOut;
+
+	private Long queueStopTimeout;
 
 	private boolean autoStartup = true;
 
@@ -94,6 +97,15 @@ public class SimpleMessageListenerContainerFactory {
 	 */
 	public void setWaitTimeOut(Integer waitTimeOut) {
 		this.waitTimeOut = waitTimeOut;
+	}
+
+	/**
+	 * Configures the queue stop timeout that waits for a queue to stop before
+	 * interrupting the running thread.
+	 * @param queueStopTimeout in milliseconds
+	 */
+	public void setQueueStopTimeout(Long queueStopTimeout) {
+		this.queueStopTimeout = queueStopTimeout;
 	}
 
 	/**
@@ -155,7 +167,7 @@ public class SimpleMessageListenerContainerFactory {
 
 	/**
 	 * Configures the destination resolver used to retrieve the queue url based on the
-	 * destination name configured for this instance. <br/>
+	 * destination name configured for this instance. <br>
 	 * This setter can be used when a custom configured {@link DestinationResolver} must
 	 * be provided. (For example if one want to have the
 	 * {@link org.springframework.cloud.aws.messaging.support.destination.DynamicQueueUrlDestinationResolver}
@@ -195,8 +207,7 @@ public class SimpleMessageListenerContainerFactory {
 			simpleMessageListenerContainer.setTaskExecutor(this.taskExecutor);
 		}
 		if (this.maxNumberOfMessages != null) {
-			simpleMessageListenerContainer
-					.setMaxNumberOfMessages(this.maxNumberOfMessages);
+			simpleMessageListenerContainer.setMaxNumberOfMessages(this.maxNumberOfMessages);
 		}
 		if (this.visibilityTimeout != null) {
 			simpleMessageListenerContainer.setVisibilityTimeout(this.visibilityTimeout);
@@ -204,12 +215,14 @@ public class SimpleMessageListenerContainerFactory {
 		if (this.waitTimeOut != null) {
 			simpleMessageListenerContainer.setWaitTimeOut(this.waitTimeOut);
 		}
+		if (this.queueStopTimeout != null) {
+			simpleMessageListenerContainer.setQueueStopTimeout(this.queueStopTimeout);
+		}
 		if (this.resourceIdResolver != null) {
 			simpleMessageListenerContainer.setResourceIdResolver(this.resourceIdResolver);
 		}
 		if (this.destinationResolver != null) {
-			simpleMessageListenerContainer
-					.setDestinationResolver(this.destinationResolver);
+			simpleMessageListenerContainer.setDestinationResolver(this.destinationResolver);
 		}
 		if (this.backOffTime != null) {
 			simpleMessageListenerContainer.setBackOffTime(this.backOffTime);

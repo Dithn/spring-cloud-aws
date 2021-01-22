@@ -42,6 +42,7 @@ import static org.springframework.cloud.aws.core.config.xml.XmlWebserviceConfigu
  * @author Agim Emruli
  * @since 1.0
  */
+@Deprecated
 class CacheBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	private static final String CACHE_MANAGER = "cacheManager";
@@ -67,20 +68,18 @@ class CacheBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 
 	// @checkstyle:on
 
-	private static String getRequiredAttribute(String attributeName, Element source,
-			ParserContext parserContext) {
+	private static String getRequiredAttribute(String attributeName, Element source, ParserContext parserContext) {
 		if (StringUtils.hasText(source.getAttribute(attributeName))) {
 			return source.getAttribute(attributeName);
 		}
 		else {
-			parserContext.getReaderContext()
-					.error("Attribute '" + attributeName + "' is required", source);
+			parserContext.getReaderContext().error("Attribute '" + attributeName + "' is required", source);
 			return null;
 		}
 	}
 
-	private static ManagedList<BeanDefinition> createDefaultCacheFactories(
-			Element element, ParserContext parserContext) {
+	private static ManagedList<BeanDefinition> createDefaultCacheFactories(Element element,
+			ParserContext parserContext) {
 		ManagedList<BeanDefinition> result = new ManagedList<>();
 		result.setSource(parserContext.extractSource(element));
 		if (ClassUtils.isPresent("net.spy.memcached.MemcachedClient",
@@ -88,32 +87,28 @@ class CacheBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 			result.add(getCacheFactory(MEMCACHED_FACTORY_CLASS_NAME, element));
 		}
 
-		if (ClassUtils.isPresent(
-				"org.springframework.data.redis.connection.RedisConnectionFactory",
+		if (ClassUtils.isPresent("org.springframework.data.redis.connection.RedisConnectionFactory",
 				parserContext.getReaderContext().getBeanClassLoader())) {
 			result.add(getCacheFactory(REDIS_CONNECTION_FACTORY_CLASS_NAME, element));
 		}
 		return result;
 	}
 
-	private static BeanDefinition createElastiCacheFactoryBean(Element source,
-			ParserContext parserContext, String clusterId,
-			ManagedList<BeanDefinition> cacheFactories) {
+	private static BeanDefinition createElastiCacheFactoryBean(Element source, ParserContext parserContext,
+			String clusterId, ManagedList<BeanDefinition> cacheFactories) {
 		BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder
 				.rootBeanDefinition(ELASTICACHE_FACTORY_BEAN);
-		beanDefinitionBuilder.addConstructorArgReference(
-				getCustomClientOrDefaultClientBeanName(source, parserContext,
-						"amazon-elasti-cache", ELASTI_CACHE_CLIENT_CLASS_NAME));
+		beanDefinitionBuilder.addConstructorArgReference(getCustomClientOrDefaultClientBeanName(source, parserContext,
+				"amazon-elasti-cache", ELASTI_CACHE_CLIENT_CLASS_NAME));
 		beanDefinitionBuilder.addConstructorArgValue(clusterId);
-		beanDefinitionBuilder.addConstructorArgReference(GlobalBeanDefinitionUtils
-				.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
+		beanDefinitionBuilder.addConstructorArgReference(
+				GlobalBeanDefinitionUtils.retrieveResourceIdResolverBeanName(parserContext.getRegistry()));
 		beanDefinitionBuilder.addConstructorArgValue(cacheFactories);
 		return beanDefinitionBuilder.getBeanDefinition();
 	}
 
 	private static BeanDefinition getCacheFactory(String className, Element element) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.genericBeanDefinition(className);
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(className);
 		if (StringUtils.hasText(element.getAttribute("expiration"))) {
 			builder.addPropertyValue("expiryTime", element.getAttribute("expiration"));
 		}
@@ -126,24 +121,21 @@ class CacheBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 	}
 
 	@Override
-	protected void doParse(Element element, ParserContext parserContext,
-			BeanDefinitionBuilder builder) {
+	protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 		if (parserContext.getRegistry().containsBeanDefinition(CACHE_MANAGER)) {
-			parserContext.getReaderContext()
-					.error("Only one cache manager can be defined", element);
+			parserContext.getReaderContext().error("Only one cache manager can be defined", element);
 		}
 
 		builder.addPropertyValue("caches", createCacheCollection(element, parserContext));
 	}
 
 	@Override
-	protected String resolveId(Element element, AbstractBeanDefinition definition,
-			ParserContext parserContext) throws BeanDefinitionStoreException {
+	protected String resolveId(Element element, AbstractBeanDefinition definition, ParserContext parserContext)
+			throws BeanDefinitionStoreException {
 		return CACHE_MANAGER;
 	}
 
-	private ManagedList<Object> createCacheCollection(Element element,
-			ParserContext parserContext) {
+	private ManagedList<Object> createCacheCollection(Element element, ParserContext parserContext) {
 		ManagedList<Object> caches = new ManagedList<>();
 		List<Element> cacheElements = DomUtils.getChildElements(element);
 
@@ -155,10 +147,8 @@ class CacheBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 				caches.add(new RuntimeBeanReference(cacheElement.getAttribute("ref")));
 				break;
 			case CACHE_CLUSTER_ELEMENT_NAME:
-				String cacheClusterId = getRequiredAttribute("name", cacheElement,
-						parserContext);
-				caches.add(createElastiCacheFactoryBean(cacheElement, parserContext,
-						cacheClusterId,
+				String cacheClusterId = getRequiredAttribute("name", cacheElement, parserContext);
+				caches.add(createElastiCacheFactoryBean(cacheElement, parserContext, cacheClusterId,
 						createDefaultCacheFactories(cacheElement, parserContext)));
 				break;
 			default:

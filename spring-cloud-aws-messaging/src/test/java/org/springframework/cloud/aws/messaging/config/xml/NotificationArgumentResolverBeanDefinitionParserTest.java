@@ -21,7 +21,7 @@ import java.net.URI;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNSClient;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -42,13 +42,11 @@ public class NotificationArgumentResolverBeanDefinitionParserTest {
 				getClass().getSimpleName() + "-minimal.xml", getClass());
 
 		// Act
-		HandlerMethodArgumentResolver argumentResolver = context
-				.getBean(HandlerMethodArgumentResolver.class);
+		HandlerMethodArgumentResolver argumentResolver = context.getBean(HandlerMethodArgumentResolver.class);
 
 		// Assert
 		assertThat(argumentResolver).isNotNull();
-		assertThat(context.containsBean(getBeanName(AmazonSNSClient.class.getName())))
-				.isTrue();
+		assertThat(context.containsBean(getBeanName(AmazonSNSClient.class.getName()))).isTrue();
 	}
 
 	// @checkstyle:off
@@ -64,9 +62,8 @@ public class NotificationArgumentResolverBeanDefinitionParserTest {
 		AmazonSNSClient snsClient = context.getBean(AmazonSNSClient.class);
 
 		// Assert
-		assertThat(ReflectionTestUtils.getField(snsClient, "endpoint")).isEqualTo(new URI(
-				"https", Region.getRegion(Regions.EU_WEST_1).getServiceEndpoint("sns"),
-				null, null));
+		assertThat(ReflectionTestUtils.getField(snsClient, "endpoint"))
+				.isEqualTo(new URI("https", Region.getRegion(Regions.EU_WEST_1).getServiceEndpoint("sns"), null, null));
 	}
 
 	// @checkstyle:off
@@ -82,9 +79,8 @@ public class NotificationArgumentResolverBeanDefinitionParserTest {
 		AmazonSNSClient snsClient = context.getBean(AmazonSNSClient.class);
 
 		// Assert
-		assertThat(ReflectionTestUtils.getField(snsClient, "endpoint")).isEqualTo(new URI(
-				"https", Region.getRegion(Regions.US_WEST_2).getServiceEndpoint("sns"),
-				null, null));
+		assertThat(ReflectionTestUtils.getField(snsClient, "endpoint"))
+				.isEqualTo(new URI("https", Region.getRegion(Regions.US_WEST_2).getServiceEndpoint("sns"), null, null));
 	}
 
 	@Test
@@ -95,13 +91,11 @@ public class NotificationArgumentResolverBeanDefinitionParserTest {
 				getClass().getSimpleName() + "-customSnsClient.xml", getClass());
 
 		// Act
-		AmazonSNSClient snsClient = context.getBean("customSnsClient",
-				AmazonSNSClient.class);
+		AmazonSNSClient snsClient = context.getBean("customSnsClient", AmazonSNSClient.class);
 
 		// Assert
 		assertThat(snsClient).isNotNull();
-		assertThat(context.containsBean(getBeanName(AmazonSNSClient.class.getName())))
-				.isFalse();
+		assertThat(context.containsBean(getBeanName(AmazonSNSClient.class.getName()))).isFalse();
 	}
 
 }

@@ -44,16 +44,15 @@ import org.springframework.util.StringUtils;
  * text body.
  *
  * @author Agim Emruli
+ * @deprecated Use `spring-cloud-starter-aws-ses`
  */
 public class SimpleEmailServiceMailSender implements MailSender, DisposableBean {
 
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(SimpleEmailServiceMailSender.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SimpleEmailServiceMailSender.class);
 
 	private final AmazonSimpleEmailService emailService;
 
-	public SimpleEmailServiceMailSender(
-			AmazonSimpleEmailService amazonSimpleEmailService) {
+	public SimpleEmailServiceMailSender(AmazonSimpleEmailService amazonSimpleEmailService) {
 		this.emailService = amazonSimpleEmailService;
 	}
 
@@ -70,11 +69,9 @@ public class SimpleEmailServiceMailSender implements MailSender, DisposableBean 
 
 		for (SimpleMailMessage simpleMessage : simpleMailMessages) {
 			try {
-				SendEmailResult sendEmailResult = getEmailService()
-						.sendEmail(prepareMessage(simpleMessage));
+				SendEmailResult sendEmailResult = getEmailService().sendEmail(prepareMessage(simpleMessage));
 				if (LOGGER.isDebugEnabled()) {
-					LOGGER.debug("Message with id: {} successfully send",
-							sendEmailResult.getMessageId());
+					LOGGER.debug("Message with id: {} successfully send", sendEmailResult.getMessageId());
 				}
 			}
 			catch (AmazonClientException e) {
@@ -113,8 +110,8 @@ public class SimpleEmailServiceMailSender implements MailSender, DisposableBean 
 		Content subject = new Content(simpleMailMessage.getSubject());
 		Body body = new Body(new Content(simpleMailMessage.getText()));
 
-		SendEmailRequest emailRequest = new SendEmailRequest(simpleMailMessage.getFrom(),
-				destination, new Message(subject, body));
+		SendEmailRequest emailRequest = new SendEmailRequest(simpleMailMessage.getFrom(), destination,
+				new Message(subject, body));
 
 		if (StringUtils.hasText(simpleMailMessage.getReplyTo())) {
 			emailRequest.withReplyToAddresses(simpleMailMessage.getReplyTo());
